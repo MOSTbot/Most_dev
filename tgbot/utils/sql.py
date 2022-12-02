@@ -72,7 +72,7 @@ def select_all_admins():
     admins_list = cur.execute("SELECT * FROM list_of_admins").fetchall()
     string = ''
     for i in admins_list:
-        string = f'{string}Имя: <b>{i[1]}</b>\nID: <b>{i[2]}</b>\n\n'
+        string = f'{string}Имя: <b>{i[1]}</b>\nХеш ID: <b>{i[2]}</b>\n\n'
     if string == '':
         return 'Список Администраторов пуст'
     else:
@@ -97,7 +97,7 @@ def last10_fb():
     last_10 = cur.execute("SELECT * FROM user_feedback ORDER BY feedback_datetime DESC LIMIT 10").fetchall()
     string = ''
     for i in last_10:
-        string = f'{string}ID: <b>{i[1]}</b>\nДата и время: <b>{i[2]}</b>\nОтзыв: <b>{i[3]}</b>\n\n'
+        string = f'{string}Последние 5 цифр хеша: <b>{i[1][59:]}</b>\nДата и время: <b>{i[2]}</b>\nОтзыв: <b>{i[3]}</b>\n\n'
     if string == '':
         return 'Список отзывов пока пуст 😶'
     else:

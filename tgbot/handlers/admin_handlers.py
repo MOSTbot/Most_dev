@@ -74,18 +74,18 @@ async def delete_admin_from_list(call: CallbackQuery):  # TODO: Check if list is
     if admins_list == 'Список Администраторов пуст':
         return await call.message.answer('Список Администраторов пуст - удалять некого 😱')
     await call.answer(cache_time=10)
-    await call.message.answer('Укажите ID удаляемого Администратора:')
+    await call.message.answer('Укажите полный хеш удаляемого Администратора:')
     await FSMDeleteAdmin.delete_admin_id.set()
 
 
 async def delete_admin_id(message: Message, state: FSMContext):  # state: delete_admin_id
-    if message.text.isdigit():
+    if len(message.text) == 64:
         async with state.proxy() as data:
             data['admin_id'] = message.text
             await message.answer("Подтвердите удаление:", reply_markup=remove_admin_rm)
             await FSMDeleteAdmin.next()
     else:
-        await message.answer('ID Администратора должно быть целым числом!')
+        await message.answer('Хеш Администратора должен состоять из 64 символов!')
 
 
 async def delete_admin_confirm(message: Message, state: FSMContext):  # state: confirm
