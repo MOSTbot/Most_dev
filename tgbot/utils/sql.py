@@ -1,4 +1,7 @@
+# TODO: Hash all admin ids in list_of_admins table and user ids in feedback table
 import sqlite3 as sq
+
+from tgbot.utils.util_classes import HashData
 
 db = sq.connect('bot.db')
 cur = db.cursor()
@@ -48,10 +51,11 @@ async def add_to_child_table(parent_table: str, parent_table_pk_column: str, par
 
 
 async def create_admin(admin_id=None, admin_name=None):
-    if check_if_item_exists(table='list_of_admins', column='admin_id', value=admin_id):
+    hash_admin_id = HashData.hash_data(admin_id)
+    if check_if_item_exists(table='list_of_admins', column='admin_id', value=hash_admin_id):
         return False
     # WARNING: To avoid SQL injection attacks, placeholders need to be used
-    cur.execute(f"INSERT INTO list_of_admins (admin_name, admin_id) VALUES('{admin_name}', '{admin_id}')")
+    cur.execute(f"INSERT INTO list_of_admins (admin_name, admin_id) VALUES('{admin_name}', '{hash_admin_id}')")
     db.commit()
     return True
 
@@ -82,9 +86,10 @@ def all_admins_list():
 
 
 def send_feedback(user_id: str = None, datetime: str = None, feedback: str = None):
+    hash_user_id = HashData.hash_data(user_id)
     # WARNING: To avoid SQL injection attacks, placeholders need to be used
     cur.execute(f"INSERT INTO user_feedback (user_id, feedback_datetime, user_feedback) "
-                f"VALUES('{user_id}', '{datetime}', '{feedback}')")
+                f"VALUES('{hash_user_id}', '{datetime}', '{feedback}')")
     db.commit()
 
 
