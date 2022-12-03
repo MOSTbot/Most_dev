@@ -6,9 +6,9 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 from tgbot.json.json_utils import advice_json, advice_keys
-from tgbot.kb import dialogue_im, advice_rm, theory_im, main_rm, feedback_rm, chat_no_more_args_im, \
-    about_project_im, ReplyMarkups
-from tgbot.utils import FSMFeedback, send_feedback, get_facts, get_assertions
+from tgbot.kb import dialogue_im, advice_rm, theory_im, chat_no_more_args_im, about_project_im, ReplyMarkups
+from tgbot.utils import FSMFeedback, send_feedback, get_facts, get_assertions, select_main_menu, \
+    select_main_menu_description
 from tgbot.utils.util_classes import MessageText
 
 mt = MessageText()
@@ -53,13 +53,14 @@ def user_log(user_id, message_text):
 
 async def fsm_confirm_feedback(message: Message, state: FSMContext):
     if message.text in ['/start', '/chat', '/practice', '/advice', '/theory', '/feedback', '🤓 Оставить отзыв']:
-        await message.answer('Написание отзыва отменено пользователем', reply_markup=main_rm)
+        await message.answer('Написание отзыва отменено пользователем', reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
         await state.finish()
 
     if message.text not in ['/start', '/chat', '/practice', '/advice', '/theory', '/feedback', '🤓 Оставить отзыв']:
         async with state.proxy() as data:
             data['user_feedback'] = message.text
-        await  message.answer('Отправить отзыв?', reply_markup=feedback_rm)
+        await  message.answer('Оставить отзыв?',
+                              reply_markup=ReplyMarkups.create_rm(2, True, 'Оставить отзыв', 'Отмена'))
         await FSMFeedback.next()
 
 
@@ -71,14 +72,14 @@ async def fsm_feedback(message: Message):
 
 
 async def fsm_send_feedback(message: Message, state: FSMContext):  # TODO: Checking message for text only type!
-    if message.text == 'Отправить отзыв':
+    if message.text == 'Оставить отзыв':
         user_id = message.from_user.id
         datetime = str(message.date)
         async with state.proxy() as data:
             send_feedback(user_id=user_id, datetime=datetime, feedback=data['user_feedback'])
-        await message.answer('Спасибо, Ваш отзыв отправлен! 🤗', reply_markup=main_rm)
+        await message.answer('Спасибо, Ваш отзыв отправлен! 🤗', reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
     else:
-        await message.answer('Вы отменили отправку отзыва!', reply_markup=main_rm)
+        await message.answer('Вы отменили отправку отзыва!', reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
         await message.delete()
     await state.finish()
 
@@ -88,15 +89,11 @@ async def start_handler(message: Message):
     # user_full_name = message.from_user.full_name
     # logging.info(f'{user_id=} {user_full_name=}')
     user_log(message.from_user.id, message.text)
-
     await message.answer_photo(
         photo=open('tgbot/assets/menu.jpg', 'rb'),
-        caption='Какое направление вы хотите запустить?', reply_markup=main_rm)
-    await message.answer("💬 <b>Режим диалога</b>\n Подобрать подходящие аргументы.\n\n"
-                         "🏋️‍♂ <b>Симулятор разговора</b>\n Подготовиться к реальному диалогу и проверить свои знания.\n\n"
-                         "🧠 <b>Психология разговора</b>\n Узнать, как бережно говорить с близкими.\n\n"
-                         "📚 <b>База аргументов</b>\n Прочитать все аргументы в одном месте.\n\n"
-                         "🤓 <b>Оставить отзыв</b>\n Поделиться мнением о проекте.", reply_markup=about_project_im)
+        caption='Какое направление вы хотите запустить?',
+        reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
+    await message.answer(select_main_menu_description(), reply_markup=about_project_im)
     await message.delete()
 
 
@@ -136,7 +133,7 @@ async def cb_more_args(call: CallbackQuery):
         await call.answer(cache_time=5)
         await call.message.answer(next(mt.get_message_text()), reply_markup=dialogue_im)
     except StopIteration:
-        await  call.message.answer('Больше аргументов нет>', reply_markup=chat_no_more_args_im) # For testing purposes
+        await  call.message.answer('Больше аргументов нет', reply_markup=chat_no_more_args_im)  # For testing purposes
 
 
 async def practice_mode(message: Message):
@@ -187,4 +184,4 @@ async def cb_feedback(call: CallbackQuery):
 async def text_wasnt_found(message: Message):
     await  message.answer(
         'Извините, я не смог распознать вопрос. Попробуйте еще раз или воспользуйтесь меню ниже ⬇',
-        reply_markup=main_rm)
+        reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
