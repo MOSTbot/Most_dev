@@ -1,7 +1,6 @@
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
-from tgbot import all_admins_list
 # from tgbot.handlers import start_handler
 from tgbot.kb import admin_menu_im, ReplyMarkups, about_project_im
 from tgbot.utils import create_admin, FSMAddAdmin, FSMDeleteAdmin, select_all_admins, last10_fb, \

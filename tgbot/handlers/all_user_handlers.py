@@ -121,17 +121,17 @@ async def chat_mode(message: Message):
 
 
 async def questions(message: Message):  # These are callback-buttons!
-    mt.set_message_text(message.text)
+    mt.message_text = message.text
     # mt.set_message_text(more_arguments(mt.get_message_text())) # JSON option
-    mt.set_message_text(get_facts(mt.get_message_text()))  # SQL option
-    await  message.reply(next(mt.get_message_text()),
+    mt.message_text = get_facts(mt.message_text)  # SQL option
+    await  message.reply(next(mt.message_text),
                          reply_markup=dialogue_im)  # WARNING: Dynamic arguments can't be recognized!
 
 
 async def cb_more_args(call: CallbackQuery):
     try:
         await call.answer(cache_time=5)
-        await call.message.answer(next(mt.get_message_text()), reply_markup=dialogue_im)
+        await call.message.answer(next(mt.message_text), reply_markup=dialogue_im)
     except StopIteration:
         await  call.message.answer('Больше аргументов нет', reply_markup=chat_no_more_args_im)  # For testing purposes
 
@@ -185,3 +185,4 @@ async def text_wasnt_found(message: Message):
     await  message.answer(
         'Извините, я не смог распознать вопрос. Попробуйте еще раз или воспользуйтесь меню ниже ⬇',
         reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
+    

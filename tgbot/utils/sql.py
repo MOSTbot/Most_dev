@@ -1,5 +1,6 @@
 # TODO: Hash all admin ids in list_of_admins table and user ids in feedback table
 import sqlite3 as sq
+from typing import Iterator
 
 from tgbot.utils.util_classes import HashData
 
@@ -27,11 +28,21 @@ fact_name        TEXT    NOT NULL,
 assertion_id     INTEGER NOT NULL,
 FOREIGN KEY (assertion_id) REFERENCES assertions (assertion_id));""")
 
+cur.execute("""CREATE TABLE IF NOT EXISTS practice_questions
+(pr_id           INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+question_name      TEXT  NOT NULL);""")
+
+cur.execute("""CREATE TABLE IF NOT EXISTS practice_answers
+(answer_id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+answer_name        TEXT    NOT NULL,
+commentary         TEXT    NOT NULL,
+pr_id     INTEGER NOT NULL,
+FOREIGN KEY (pr_id) REFERENCES practice_questions (pr_id));""")
+
 cur.execute("""CREATE TABLE IF NOT EXISTS main_menu
 (mm_id           INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 main_menu_name     TEXT  NOT NULL,
 description        TEXT);""")
-
 
 def select_main_menu(table:str, col_name:str):
     rows = cur.execute(f"SELECT {col_name} FROM {table}").fetchall()
@@ -49,29 +60,28 @@ def check_if_item_exists(table: str, column: str, value: str) -> bool:
     return res is not None and res[0] == value
 
 
-async def add_to_table(table: str, column: str, value: str):
-    # WARNING: To avoid SQL injection attacks, placeholders need to be used
-    cur.execute(f"INSERT INTO {table} ({column}) VALUES('{value}')")
+async def add_to_table(table: str, column: str, value: str) -> None:
+    cur.execute(f"INSERT INTO {table} ({column}) VALUES(?)", (value,))
     db.commit()
 
 
 async def add_to_child_table(parent_table: str, parent_table_pk_column: str, parent_table_column: str,
                              parent_table_value: str,
-                             child_table: str, child_table_column: str, child_table_value: str):
+                             child_table: str, child_table_column: str, child_table_value: str) -> None:
     cur.execute(
-        # WARNING: To avoid SQL injection attacks, placeholders need to be used
         f"INSERT INTO {child_table} ({child_table_column}, {parent_table_pk_column})"
-        f" VALUES ('{child_table_value}', "
-        f"(SELECT {parent_table_pk_column} FROM {parent_table} WHERE {parent_table_column} IS '{parent_table_value}'))")
+        f" VALUES (?, ?)",
+        (child_table_value, cur.execute(f"SELECT {parent_table_pk_column}"
+                                        f" FROM {parent_table}"
+                                        f" WHERE {parent_table_column} IS '{parent_table_value}'").fetchone()[0]))
     db.commit()
 
 
-async def create_admin(admin_id=None, admin_name=None):
+async def create_admin(admin_id=None, admin_name=None) -> bool:
     hash_admin_id = HashData.hash_data(admin_id)
     if check_if_item_exists(table='list_of_admins', column='admin_id', value=hash_admin_id):
         return False
-    # WARNING: To avoid SQL injection attacks, placeholders need to be used
-    cur.execute(f"INSERT INTO list_of_admins (admin_name, admin_id) VALUES('{admin_name}', '{hash_admin_id}')")
+    cur.execute('INSERT INTO list_of_admins (admin_name, admin_id) VALUES(?, ?)', (admin_name, hash_admin_id))
     db.commit()
     return True
 
@@ -101,11 +111,11 @@ def all_admins_list():
     return list_of_admins
 
 
-def send_feedback(user_id: str = None, datetime: str = None, feedback: str = None):
+def send_feedback(user_id: str = None, datetime: str = None, feedback: str = None) -> None:
     hash_user_id = HashData.hash_data(user_id)
-    # WARNING: To avoid SQL injection attacks, placeholders need to be used
-    cur.execute(f"INSERT INTO user_feedback (user_id, feedback_datetime, user_feedback) "
-                f"VALUES('{hash_user_id}', '{datetime}', '{feedback}')")
+    cur.execute('INSERT INTO user_feedback (user_id, feedback_datetime, user_feedback) VALUES(?, ?, ?)',
+                (hash_user_id, datetime, feedback))
+
     db.commit()
 
 
@@ -120,10 +130,10 @@ def last10_fb():
         return f'<b>Последние 10 отзывов:</b>\n\n{string}'
 
 
-def get_facts(assertion: str):
+def get_facts(message_text: str) -> Iterator[str]:
     facts = cur.execute(f"SELECT fact_name FROM assertions "
                         f"LEFT JOIN facts f ON assertions.assertion_id = f.assertion_id "
-                        f"WHERE assertion_name IS '{assertion}'").fetchall()
+                        f"WHERE assertion_name IS '{message_text}'").fetchall()
     for i in range(len(facts)):
         yield facts[i][0]
 
