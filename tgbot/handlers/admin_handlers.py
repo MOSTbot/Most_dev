@@ -4,14 +4,14 @@ from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 # from tgbot.handlers import start_handler
 from tgbot.kb import ReplyMarkups, InlineMarkups
 from tgbot.utils import create_admin, FSMAddAdmin, FSMDeleteAdmin, select_all_admins, last10_fb, \
-    FSMAddAssertion, check_if_item_exists, add_to_child_table, delete_from_table, add_to_table, select_main_menu
+    FSMAddAssertion, check_if_item_exists, add_to_child_table, delete_from_table, add_to_table, select_by_table_and_column
 
 
 async def admin_start(message: Message):
     await message.answer_photo(
         photo=open('tgbot/assets/menu.jpg', 'rb'),
         caption='Какое направление вы хотите запустить?',
-        reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
+        reply_markup=ReplyMarkups.create_rm(2, True, *select_by_table_and_column('main_menu', 'main_menu_name')))
     await message.answer("💬 <b>Режим диалога</b>\n Подобрать подходящие аргументы.\n\n"
                          "🏋️‍♂ <b>Симулятор разговора</b>\n Подготовиться к реальному диалогу и проверить свои знания.\n\n"
                          "🧠 <b>Психология разговора</b>\n Узнать, как бережно говорить с близкими.\n\n"

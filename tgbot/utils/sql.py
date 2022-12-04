@@ -19,38 +19,50 @@ feedback_datetime TEXT    NOT NULL,
 user_feedback     TEXT    NOT NULL)""")
 
 cur.execute("""CREATE TABLE IF NOT EXISTS assertions
-(assertion_id       INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-assertion_name TEXT         NOT NULL);""")
+(assertion_id     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+assertion_name    TEXT    NOT NULL);""")
 
 cur.execute("""CREATE TABLE IF NOT EXISTS facts
-(fact_id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-fact_name        TEXT    NOT NULL,
-assertion_id     INTEGER NOT NULL,
+(fact_id          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+fact_name         TEXT    NOT NULL,
+assertion_id      INTEGER NOT NULL,
 FOREIGN KEY (assertion_id) REFERENCES assertions (assertion_id));""")
 
 cur.execute("""CREATE TABLE IF NOT EXISTS practice_questions
-(pr_id           INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-question_name      TEXT  NOT NULL);""")
+(pr_id            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+question_name       TEXT  NOT NULL);""")
 
 cur.execute("""CREATE TABLE IF NOT EXISTS practice_answers
-(answer_id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-answer_name        TEXT    NOT NULL,
-commentary         TEXT    NOT NULL,
-pr_id     INTEGER NOT NULL,
+(answer_id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+answer_name       TEXT    NOT NULL,
+commentary        TEXT    NOT NULL,
+pr_id             INTEGER NOT NULL,
 FOREIGN KEY (pr_id) REFERENCES practice_questions (pr_id));""")
 
+cur.execute("""CREATE TABLE IF NOT EXISTS advice
+(topic_id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+topic_name        TEXT    NOT NULL,
+topic_description TEXT    NOT NULL);""")
+
 cur.execute("""CREATE TABLE IF NOT EXISTS main_menu
-(mm_id           INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-main_menu_name     TEXT  NOT NULL,
-description        TEXT);""")
+(mm_id            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+main_menu_name      TEXT  NOT NULL,
+description         TEXT);""")
 
 
-def select_main_menu(table: str, col_name: str):
+def select_by_table_and_column(table: str, col_name: str) -> list:
     rows = cur.execute(f"SELECT {col_name} FROM {table}").fetchall()
     return [row[0] for row in rows]
 
 
-def select_main_menu_description():
+def find_value(table: str, target_column: str, col_value_is_taken_from: str,
+               value: str, fetchall: bool = False) -> (str, tuple):
+    res = cur.execute(f"SELECT {target_column} FROM {table} WHERE {col_value_is_taken_from} IS '{value}'")
+    res = res.fetchall() if fetchall else res.fetchone()
+    return 'Ничего не было найдено' if res is None or not list(res) else res
+
+
+def select_main_menu_description() -> str:
     description = cur.execute("SELECT * FROM main_menu").fetchall()
     string = ''
     for i in description:
@@ -89,7 +101,7 @@ async def create_admin(admin_id=None, admin_name=None) -> bool:
     return True
 
 
-async def delete_from_table(table: str, column: str, value: str):
+async def delete_from_table(table: str, column: str, value: str) -> bool:
     if cur.execute(f"SELECT * FROM {table} WHERE {column} IS '{value}'").fetchone():
         cur.execute(f"DELETE FROM {table} WHERE {column} IS '{value}'")
         db.commit()
@@ -97,7 +109,7 @@ async def delete_from_table(table: str, column: str, value: str):
     return False
 
 
-def select_all_admins():
+def select_all_admins() -> str:
     admins_list = cur.execute("SELECT * FROM list_of_admins").fetchall()
     string = ''
     for i in admins_list:
@@ -108,7 +120,7 @@ def select_all_admins():
         return f'<b>Список Администраторов:</b>\n\n{string}'
 
 
-def all_admins_list():
+def all_admins_list() -> list:
     list_of_admins = cur.execute("SELECT admin_id FROM list_of_admins").fetchall()
     list_of_admins = [list_of_admins[i][0] for i, item in enumerate(list_of_admins)]
     return list_of_admins
@@ -122,7 +134,7 @@ def send_feedback(user_id: str = None, datetime: str = None, feedback: str = Non
     db.commit()
 
 
-def last10_fb():
+def last10_fb() -> str:
     last_10 = cur.execute("SELECT * FROM user_feedback ORDER BY feedback_datetime DESC LIMIT 10").fetchall()
     string = ''
     for i in last_10:

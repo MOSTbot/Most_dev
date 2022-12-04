@@ -5,10 +5,10 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
-from tgbot.json.json_utils import advice_json, advice_keys
-from tgbot.kb import advice_rm, ReplyMarkups, InlineMarkups
-from tgbot.utils import FSMFeedback, send_feedback, get_facts, get_assertions, select_main_menu, \
-    select_main_menu_description
+from tgbot.json.json_utils import advice_json
+from tgbot.kb import ReplyMarkups, InlineMarkups
+from tgbot.utils import FSMFeedback, send_feedback, get_facts, get_assertions, select_by_table_and_column, \
+    select_main_menu_description, find_value
 from tgbot.utils.util_classes import MessageText
 
 mt = MessageText()
@@ -31,7 +31,8 @@ def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(practice_mode, Text(equals='🏋️‍♂ Симулятор разговора', ignore_case=True), state="*")
     dp.register_message_handler(advice_mode, commands=["advice"], state="*")
     dp.register_message_handler(advice_mode, Text(equals='🧠 Психология разговора', ignore_case=True), state="*")
-    dp.register_message_handler(advice_mode2, Text(equals=[*advice_keys]), state="*")  # WARNING: JSON option
+    dp.register_message_handler(advice_mode2, Text(equals=[*select_by_table_and_column('advice', 'topic_name')]),
+                                state="*")  # WARNING: JSON option
     dp.register_message_handler(theory_mode, commands=["theory"], state="*")
     dp.register_message_handler(theory_mode, Text(equals='📚 База аргументов', ignore_case=True), state="*")
     dp.register_message_handler(text_wasnt_found, state="*")
@@ -42,26 +43,22 @@ def user_log(user_id, message_text):
     return logging.info(f'{user_id=} {message_text=}')
 
 
-
+# WARNING: Develop options for completing FSM. Not all state.finish() options have been explored
 async def fsm_confirm_feedback(message: Message, state: FSMContext):
-    if message.text in ['/start', '/chat', '/practice', '/advice', '/theory', '/feedback', '🤓 Оставить отзыв']:
-        await message.answer('Написание отзыва отменено пользователем', reply_markup=ReplyMarkups.create_rm(2, True,
-                                                                                                            *select_main_menu(
-                                                                                                                'main_menu',
-                                                                                                                'main_menu_name')))
-        await state.finish()
-
-    if message.text not in ['/start', '/chat', '/practice', '/advice', '/theory', '/feedback', '🤓 Оставить отзыв']:
-        async with state.proxy() as data:
-            data['user_feedback'] = message.text
-        await  message.answer('Оставить отзыв?',
-                              reply_markup=ReplyMarkups.create_rm(2, True, 'Оставить отзыв', 'Отмена'))
-        await FSMFeedback.next()
+    if message.text in ['/start', '/chat', '/practice', '/advice', '/theory', '/feedback', '🤓 Оставить отзыв',
+                        'Отмена']:
+        await message.answer('Написание отзыва отменено пользователем',
+                             reply_markup=ReplyMarkups.create_rm(2, True, *select_by_table_and_column('main_menu',
+                                                                                                      'main_menu_name')))
+        return await state.finish()
+    async with state.proxy() as data: data['user_feedback'] = message.text
+    await  message.answer('Оставить отзыв?', reply_markup=ReplyMarkups.create_rm(2, True, 'Оставить отзыв', 'Отмена'))
+    await FSMFeedback.next()
 
 
 async def fsm_feedback(message: Message):
     await  message.answer(
-        'Напишите отзыв о нашем проекте ⬇', reply_markup=ReplyKeyboardRemove())  # TODO: Cancel button!
+        'Напишите отзыв о нашем проекте ⬇', reply_markup=ReplyMarkups.create_rm(1, True, 'Отмена'))
     await FSMFeedback.feedback.set()  # state: feedback
     # await message.delete()
 
@@ -73,16 +70,16 @@ async def fsm_send_feedback(message: Message, state: FSMContext):  # TODO: Check
         async with state.proxy() as data:
             send_feedback(user_id=user_id, datetime=datetime, feedback=data['user_feedback'])
         await message.answer('Спасибо, Ваш отзыв отправлен! 🤗', reply_markup=ReplyMarkups.create_rm(2, True,
-                                                                                                     *select_main_menu(
+                                                                                                     *select_by_table_and_column(
                                                                                                          'main_menu',
                                                                                                          'main_menu_name')))
     else:
         await message.answer('Вы отменили отправку отзыва!', reply_markup=ReplyMarkups.create_rm(2, True,
-                                                                                                 *select_main_menu(
+                                                                                                 *select_by_table_and_column(
                                                                                                      'main_menu',
                                                                                                      'main_menu_name')))
         await message.delete()
-    await state.finish()
+    return await state.finish()
 
 
 async def start_handler(message: Message):
@@ -93,7 +90,7 @@ async def start_handler(message: Message):
     await message.answer_photo(
         photo=open('tgbot/assets/menu.jpg', 'rb'),
         caption='Какое направление вы хотите запустить?',
-        reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
+        reply_markup=ReplyMarkups.create_rm(2, True, *select_by_table_and_column('main_menu', 'main_menu_name')))
     await message.answer(select_main_menu_description(),
                          reply_markup=InlineMarkups.create_im(2, ['Узнать больше о проекте'], ['some callback'], [
                              'https://relocation.guide/most']))  # FIXME: The link needs to be replaced
@@ -125,7 +122,6 @@ async def chat_mode(message: Message):
 
 async def questions(message: Message):  # These are callback-buttons!
     mt.message_text = message.text
-    # mt.message_text = more_arguments(mt.message_text) # JSON option
     mt.message_text = get_facts(mt.message_text)  # SQL option
     await  message.reply(next(mt.message_text),
                          reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы', '👍', '👎',
@@ -155,7 +151,7 @@ async def cb_more_args(call: CallbackQuery):
 async def practice_mode(message: Message):
     await  message.answer_photo(
         photo=open('tgbot/assets/practice.jpg', 'rb'),
-        caption='🟢 МОСТ работает в режиме симулятор разговора.')
+        caption='🟢 МОСТ работает в режиме симулятор разговора.', reply_markup=ReplyKeyboardRemove())
     await  message.answer('Проверьте, насколько хорошо вы умеете бороться с пропагандой.'
                           ' Мы собрали для вас 10 мифов о войне и для каждого подобрали 3 варианта ответа —'
                           ' выберите верные, а бот МОСТ даст подробные комментарии.',
@@ -169,12 +165,16 @@ async def advice_mode(message: Message):
         caption='🟢 Собрали советы психологов о том, как не сойти с ума и говорить о войне с близкими,'
                 ' чего ожидать, как реагировать и вести себя.', reply_markup=ReplyKeyboardRemove())
     await  message.answer('Выберите тему, чтобы прочитать ⬇',
-                          reply_markup=advice_rm)
+                          reply_markup=ReplyMarkups.create_rm(3, True,
+                                                              *select_by_table_and_column('advice', 'topic_name')))
     await message.delete()
 
 
+# WARNING: JSON
 async def advice_mode2(message: Message):
-    for i in advice_json[message.text]: await message.answer(i, reply_markup=advice_rm)
+    await message.reply(find_value('advice', 'topic_description', 'topic_name', message.text),
+                        reply_markup=ReplyMarkups.create_rm(3, True, *select_by_table_and_column('advice',
+                                                                                                 'topic_name')))
 
 
 async def theory_mode(message: Message):
@@ -202,5 +202,4 @@ async def cb_feedback(call: CallbackQuery):
 async def text_wasnt_found(message: Message):
     await  message.answer(
         'Извините, я не смог распознать вопрос. Попробуйте еще раз или воспользуйтесь меню ниже ⬇',
-        reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
-    
+        reply_markup=ReplyMarkups.create_rm(2, True, *select_by_table_and_column('main_menu', 'main_menu_name')))
