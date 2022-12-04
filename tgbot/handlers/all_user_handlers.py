@@ -6,7 +6,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 from tgbot.json.json_utils import advice_json, advice_keys
-from tgbot.kb import dialogue_im, advice_rm, theory_im, chat_no_more_args_im, about_project_im, ReplyMarkups
+from tgbot.kb import advice_rm, ReplyMarkups, InlineMarkups
 from tgbot.utils import FSMFeedback, send_feedback, get_facts, get_assertions, select_main_menu, \
     select_main_menu_description
 from tgbot.utils.util_classes import MessageText
@@ -42,18 +42,13 @@ def user_log(user_id, message_text):
     return logging.info(f'{user_id=} {message_text=}')
 
 
-# def more_arguments(user_choice: dict): # WARNING: JSON option
-#     # sourcery skip: inline-immediately-yielded-variable
-#     for j in range(0, len(questions_answers_json[user_choice]), 3):
-#         msg = '<b>Фраза-мост</b> ⬇\n' + questions_answers_json[user_choice][j] \
-#               + '\n\n<b>Аргумент ⬇</b>\n' + questions_answers_json[user_choice][j + 1] \
-#               + '\n\n<b>Наводящий вопрос ⬇</b>\n' + questions_answers_json[user_choice][j + 2]
-#         yield msg
-
 
 async def fsm_confirm_feedback(message: Message, state: FSMContext):
     if message.text in ['/start', '/chat', '/practice', '/advice', '/theory', '/feedback', '🤓 Оставить отзыв']:
-        await message.answer('Написание отзыва отменено пользователем', reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
+        await message.answer('Написание отзыва отменено пользователем', reply_markup=ReplyMarkups.create_rm(2, True,
+                                                                                                            *select_main_menu(
+                                                                                                                'main_menu',
+                                                                                                                'main_menu_name')))
         await state.finish()
 
     if message.text not in ['/start', '/chat', '/practice', '/advice', '/theory', '/feedback', '🤓 Оставить отзыв']:
@@ -68,7 +63,7 @@ async def fsm_feedback(message: Message):
     await  message.answer(
         'Напишите отзыв о нашем проекте ⬇', reply_markup=ReplyKeyboardRemove())  # TODO: Cancel button!
     await FSMFeedback.feedback.set()  # state: feedback
-    await message.delete()
+    # await message.delete()
 
 
 async def fsm_send_feedback(message: Message, state: FSMContext):  # TODO: Checking message for text only type!
@@ -77,9 +72,15 @@ async def fsm_send_feedback(message: Message, state: FSMContext):  # TODO: Check
         datetime = str(message.date)
         async with state.proxy() as data:
             send_feedback(user_id=user_id, datetime=datetime, feedback=data['user_feedback'])
-        await message.answer('Спасибо, Ваш отзыв отправлен! 🤗', reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
+        await message.answer('Спасибо, Ваш отзыв отправлен! 🤗', reply_markup=ReplyMarkups.create_rm(2, True,
+                                                                                                     *select_main_menu(
+                                                                                                         'main_menu',
+                                                                                                         'main_menu_name')))
     else:
-        await message.answer('Вы отменили отправку отзыва!', reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
+        await message.answer('Вы отменили отправку отзыва!', reply_markup=ReplyMarkups.create_rm(2, True,
+                                                                                                 *select_main_menu(
+                                                                                                     'main_menu',
+                                                                                                     'main_menu_name')))
         await message.delete()
     await state.finish()
 
@@ -93,7 +94,9 @@ async def start_handler(message: Message):
         photo=open('tgbot/assets/menu.jpg', 'rb'),
         caption='Какое направление вы хотите запустить?',
         reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
-    await message.answer(select_main_menu_description(), reply_markup=about_project_im)
+    await message.answer(select_main_menu_description(),
+                         reply_markup=InlineMarkups.create_im(2, ['Узнать больше о проекте'], ['some callback'], [
+                             'https://relocation.guide/most']))  # FIXME: The link needs to be replaced
     await message.delete()
 
 
@@ -122,18 +125,31 @@ async def chat_mode(message: Message):
 
 async def questions(message: Message):  # These are callback-buttons!
     mt.message_text = message.text
-    # mt.set_message_text(more_arguments(mt.get_message_text())) # JSON option
+    # mt.message_text = more_arguments(mt.message_text) # JSON option
     mt.message_text = get_facts(mt.message_text)  # SQL option
     await  message.reply(next(mt.message_text),
-                         reply_markup=dialogue_im)  # WARNING: Dynamic arguments can't be recognized!
+                         reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы', '👍', '👎',
+                                                                  'Оставить отзыв', 'Главное меню'],
+                                                              ['more_arguments', 'some callback', 'some callback',
+                                                               'some callback', 'feedback',
+                                                               'main_menu']))  # WARNING: Dynamic arguments can't be recognized!
 
 
 async def cb_more_args(call: CallbackQuery):
     try:
         await call.answer(cache_time=5)
-        await call.message.answer(next(mt.message_text), reply_markup=dialogue_im)
+        await call.message.answer(next(mt.message_text),
+                                  reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы', '👍', '👎',
+                                                                           'Оставить отзыв', 'Главное меню'],
+                                                                       ['more_arguments', 'some callback',
+                                                                        'some callback',
+                                                                        'some callback', 'feedback',
+                                                                        'main_menu']))  # WARNING: Dynamic arguments can't be recognized!)
     except StopIteration:
-        await  call.message.answer('Больше аргументов нет', reply_markup=chat_no_more_args_im)  # For testing purposes
+        await  call.message.answer('Больше аргументов нет',
+                                   reply_markup=InlineMarkups.create_im(2, ['Другие вопросы', 'Главное меню'],
+                                                                        ['some callback',
+                                                                         'main_menu']))  # For testing purposes
 
 
 async def practice_mode(message: Message):
@@ -143,7 +159,7 @@ async def practice_mode(message: Message):
     await  message.answer('Проверьте, насколько хорошо вы умеете бороться с пропагандой.'
                           ' Мы собрали для вас 10 мифов о войне и для каждого подобрали 3 варианта ответа —'
                           ' выберите верные, а бот МОСТ даст подробные комментарии.',
-                          reply_markup=ReplyKeyboardRemove())
+                          reply_markup=InlineMarkups.create_im(2, ['Поехали! 🚀', 'Главное меню'], ['sc', 'main_menu']))
     await message.delete()
 
 
@@ -167,7 +183,9 @@ async def theory_mode(message: Message):
         photo=open('tgbot/assets/theory.jpg', 'rb'),
         caption='Энциклопедия борца с пропагандой — самые полезные статьи, видео и аргументы.'
                 ' Для тех, кто хочет детально разобраться в том, что происходит.',
-        reply_markup=theory_im)
+        reply_markup=InlineMarkups.create_im(2, ['Перейти в базу аргументов', 'Главное меню'],
+                                             ['sc', 'main_menu'], ['https://relocation.guide/most',
+                                                                   None]))  # FIXME: The link needs to be replaced
     await message.delete()
 
 

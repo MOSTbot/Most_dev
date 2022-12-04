@@ -2,23 +2,36 @@ from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 # from tgbot.handlers import start_handler
-from tgbot.kb import admin_menu_im, ReplyMarkups, about_project_im
+from tgbot.kb import ReplyMarkups, InlineMarkups
 from tgbot.utils import create_admin, FSMAddAdmin, FSMDeleteAdmin, select_all_admins, last10_fb, \
     FSMAddAssertion, check_if_item_exists, add_to_child_table, delete_from_table, add_to_table, select_main_menu
 
 
 async def admin_start(message: Message):
-
     await message.answer_photo(
         photo=open('tgbot/assets/menu.jpg', 'rb'),
-        caption='Какое направление вы хотите запустить?', reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
+        caption='Какое направление вы хотите запустить?',
+        reply_markup=ReplyMarkups.create_rm(2, True, *select_main_menu('main_menu', 'main_menu_name')))
     await message.answer("💬 <b>Режим диалога</b>\n Подобрать подходящие аргументы.\n\n"
                          "🏋️‍♂ <b>Симулятор разговора</b>\n Подготовиться к реальному диалогу и проверить свои знания.\n\n"
                          "🧠 <b>Психология разговора</b>\n Узнать, как бережно говорить с близкими.\n\n"
                          "📚 <b>База аргументов</b>\n Прочитать все аргументы в одном месте.\n\n"
-                         "🤓 <b>Оставить отзыв</b>\n Поделиться мнением о проекте.", reply_markup=about_project_im)
+                         "🤓 <b>Оставить отзыв</b>\n Поделиться мнением о проекте.",
+                         reply_markup=InlineMarkups.create_im(1, ['Узнать больше о проекте'], ['more_about_project'],
+                                                              ['https://relocation.guide/most']))
     await message.delete()
-    await message.answer("Вы являетесь Администратором бота", reply_markup=admin_menu_im)
+    await message.answer("Вы являетесь Администратором бота", reply_markup=InlineMarkups.create_im(2,
+                                                                                                   [
+                                                                                                       'Добавить Администратора',
+                                                                                                       'Удалить Администратора',
+                                                                                                       'Список Администраторов',
+                                                                                                       'Последние 10 отзывов',
+                                                                                                       'Добавить раздел'],
+                                                                                                   ['admin_promote_ib',
+                                                                                                    'admin_remove_ib',
+                                                                                                    'admins_list_ib',
+                                                                                                    'last_10_feedbacks_ib',
+                                                                                                    'add_section_ib']))
 
 
 # ------------------- PROMOTE TO ADMIN -------------------
@@ -81,7 +94,8 @@ async def delete_admin_id(message: Message, state: FSMContext):  # state: delete
     if len(message.text) == 64:
         async with state.proxy() as data:
             data['admin_id'] = message.text
-            await message.answer("Подтвердите удаление:", reply_markup=ReplyMarkups.create_rm(2, True, 'Удалить', 'Отмена'))
+            await message.answer("Подтвердите удаление:",
+                                 reply_markup=ReplyMarkups.create_rm(2, True, 'Удалить', 'Отмена'))
             await FSMDeleteAdmin.next()
     else:
         await message.answer('Хеш Администратора должен состоять из 64 символов!')
@@ -128,7 +142,8 @@ async def check_assertion(message: Message, state: FSMContext):  # state: initia
     async with state.proxy() as data:
         data['assertion'] = message.text
     if assertion is False:
-        await message.answer('Этого аргумента нет в базе данных. Добавить?', reply_markup=ReplyMarkups.create_rm(2, True, 'Добавить', 'Отмена'))
+        await message.answer('Этого аргумента нет в базе данных. Добавить?',
+                             reply_markup=ReplyMarkups.create_rm(2, True, 'Добавить', 'Отмена'))
         return await FSMAddAssertion.add_assertion.set()  # state: add_assertion
     await message.answer('Напишите контрагрументы к этому утверждению, по одному за раз:',
                          reply_markup=ReplyKeyboardRemove())

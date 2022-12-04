@@ -44,9 +44,11 @@ cur.execute("""CREATE TABLE IF NOT EXISTS main_menu
 main_menu_name     TEXT  NOT NULL,
 description        TEXT);""")
 
-def select_main_menu(table:str, col_name:str):
+
+def select_main_menu(table: str, col_name: str):
     rows = cur.execute(f"SELECT {col_name} FROM {table}").fetchall()
     return [row[0] for row in rows]
+
 
 def select_main_menu_description():
     description = cur.execute("SELECT * FROM main_menu").fetchall()
@@ -54,6 +56,7 @@ def select_main_menu_description():
     for i in description:
         string = f'{string}<b>{i[1]}</b>\n{i[2]}\n\n'
     return 'Список меню пуст' if string == '' else string
+
 
 def check_if_item_exists(table: str, column: str, value: str) -> bool:
     res = cur.execute(f"SELECT {column} FROM {table} WHERE {column} IS '{value}'").fetchone()
@@ -96,10 +99,10 @@ async def delete_from_table(table: str, column: str, value: str):
 
 def select_all_admins():
     admins_list = cur.execute("SELECT * FROM list_of_admins").fetchall()
-    string = None
+    string = ''
     for i in admins_list:
         string = f'{string}Имя: <b>{i[1]}</b>\nХеш ID: <b>{i[2]}</b>\n\n'
-    if string is None:
+    if string == '':
         return 'Список Администраторов пуст'
     else:
         return f'<b>Список Администраторов:</b>\n\n{string}'
