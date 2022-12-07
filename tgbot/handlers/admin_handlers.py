@@ -4,7 +4,8 @@ from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 # from tgbot.handlers import start_handler
 from tgbot.kb import ReplyMarkups, InlineMarkups
 from tgbot.utils import create_admin, FSMAddAdmin, FSMDeleteAdmin, select_all_admins, last10_fb, \
-    FSMAddAssertion, check_if_item_exists, add_to_child_table, delete_from_table, add_to_table, select_by_table_and_column
+    FSMAddAssertion, check_if_item_exists, add_to_child_table, delete_from_table, add_to_table, \
+    select_by_table_and_column, get_assertions
 
 
 async def admin_start(message: Message):
@@ -133,7 +134,7 @@ async def last_10_feedbacks(call: CallbackQuery):
 async def assertion_init(call: CallbackQuery):
     await call.answer(cache_time=10)
     await call.message.answer('Выберете существующее утверждение или напишите новое',
-                              reply_markup=ReplyMarkups.questions_rm())
+                              reply_markup=ReplyMarkups.create_rm(3, True, *get_assertions()))
     await FSMAddAssertion.initialize.set()
 
 
@@ -146,7 +147,7 @@ async def check_assertion(message: Message, state: FSMContext):  # state: initia
                              reply_markup=ReplyMarkups.create_rm(2, True, 'Добавить', 'Отмена'))
         return await FSMAddAssertion.add_assertion.set()  # state: add_assertion
     await message.answer('Напишите контрагрументы к этому утверждению, по одному за раз:',
-                         reply_markup=ReplyKeyboardRemove())
+                         reply_markup=ReplyMarkups.create_rm(1, True, 'Отмена'))
     await FSMAddAssertion.facts_init.set()  # If the argument is in the database, switch to adding facts to this argument
 
 

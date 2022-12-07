@@ -5,7 +5,6 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
-from tgbot.json.json_utils import advice_json
 from tgbot.kb import ReplyMarkups, InlineMarkups
 from tgbot.utils import FSMFeedback, send_feedback, get_facts, get_assertions, select_by_table_and_column, \
     select_main_menu_description, find_value
@@ -102,7 +101,7 @@ async def chat_mode(message: Message):
         photo=open('tgbot/assets/chat.jpg', 'rb'),
         caption='🟢 МОСТ работает в режиме диалога. Отправляйте фразу или вопрос в чат и получайте аргументы,'
                 ' которые помогают отделить ложь от правды. Оценивайте их силу, чтобы сделать МОСТ еще крепче.',
-        reply_markup=ReplyMarkups.questions_rm())
+        reply_markup=ReplyMarkups.create_rm(3, True, *get_assertions()))
     await  message.answer('<i>Рассмотрим пример аргумента</i>\n\n'
                           'Собеседни_ца говорит вам: <b>«Мы многого не знаем, всё не так однозначно».</b>\n\n'
                           '<b>Фраза-мост — позволяет построить контакт с собеседником</b> ⬇\n'
@@ -119,7 +118,7 @@ async def chat_mode(message: Message):
                           ' чтобы получить аргумент. Например, «Путин знает, что делает» или «Это война с НАТО» ⬇')
     await message.delete()
 
-
+# WARNING: Catch exception 'Message text is empty' (Admin has not added any facts yet)
 async def questions(message: Message):  # These are callback-buttons!
     mt.message_text = message.text
     mt.message_text = get_facts(mt.message_text)  # SQL option
