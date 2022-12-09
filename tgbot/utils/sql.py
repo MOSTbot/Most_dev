@@ -1,4 +1,3 @@
-# TODO: Hash all admin ids in list_of_admins table and user ids in feedback table
 import sqlite3 as sq
 from typing import Iterator
 

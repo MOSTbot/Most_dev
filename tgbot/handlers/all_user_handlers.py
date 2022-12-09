@@ -23,7 +23,7 @@ def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(chat_mode, Text(equals='💬 Режим диалога', ignore_case=True), state="*")
     dp.register_message_handler(questions, Text(equals=[*get_assertions()], ignore_case=True),
                                 # WARNING: Here's the problem with dynamic update
-                                state="*")  # WARNING: SQL option
+                                state="*")
     dp.register_callback_query_handler(cb_more_args, text='more_arguments', state="*")
     dp.register_callback_query_handler(cb_feedback, text='feedback', state="*")
     dp.register_message_handler(practice_mode, commands=["practice"], state="*")
@@ -31,7 +31,7 @@ def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(advice_mode, commands=["advice"], state="*")
     dp.register_message_handler(advice_mode, Text(equals='🧠 Психология разговора', ignore_case=True), state="*")
     dp.register_message_handler(advice_mode2, Text(equals=[*select_by_table_and_column('advice', 'topic_name')]),
-                                state="*")  # WARNING: JSON option
+                                state="*")
     dp.register_message_handler(theory_mode, commands=["theory"], state="*")
     dp.register_message_handler(theory_mode, Text(equals='📚 База аргументов', ignore_case=True), state="*")
     dp.register_message_handler(text_wasnt_found, state="*")
@@ -59,7 +59,6 @@ async def fsm_feedback(message: Message):
     await  message.answer(
         'Напишите отзыв о нашем проекте ⬇', reply_markup=ReplyMarkups.create_rm(1, True, 'Отмена'))
     await FSMFeedback.feedback.set()  # state: feedback
-    # await message.delete()
 
 
 async def fsm_send_feedback(message: Message, state: FSMContext):  # TODO: Checking message for text only type!
@@ -68,15 +67,13 @@ async def fsm_send_feedback(message: Message, state: FSMContext):  # TODO: Check
         datetime = str(message.date)
         async with state.proxy() as data:
             send_feedback(user_id=user_id, datetime=datetime, feedback=data['user_feedback'])
-        await message.answer('Спасибо, Ваш отзыв отправлен! 🤗', reply_markup=ReplyMarkups.create_rm(2, True,
-                                                                                                     *select_by_table_and_column(
-                                                                                                         'main_menu',
-                                                                                                         'main_menu_name')))
+        await message.answer('Спасибо, Ваш отзыв отправлен! 🤗',
+                             reply_markup=ReplyMarkups.create_rm(2, True, *select_by_table_and_column('main_menu',
+                                                                                                      'main_menu_name')))
     else:
-        await message.answer('Вы отменили отправку отзыва!', reply_markup=ReplyMarkups.create_rm(2, True,
-                                                                                                 *select_by_table_and_column(
-                                                                                                     'main_menu',
-                                                                                                     'main_menu_name')))
+        await message.answer('Вы отменили отправку отзыва!',
+                             reply_markup=ReplyMarkups.create_rm(2, True, *select_by_table_and_column('main_menu',
+                                                                                                      'main_menu_name')))
         await message.delete()
     return await state.finish()
 
@@ -118,6 +115,7 @@ async def chat_mode(message: Message):
                           ' чтобы получить аргумент. Например, «Путин знает, что делает» или «Это война с НАТО» ⬇')
     await message.delete()
 
+
 # WARNING: Catch exception 'Message text is empty' (Admin has not added any facts yet)
 async def questions(message: Message):  # These are callback-buttons!
     mt.message_text = message.text
@@ -139,12 +137,12 @@ async def cb_more_args(call: CallbackQuery):
                                                                        ['more_arguments', 'some callback',
                                                                         'some callback',
                                                                         'some callback', 'feedback',
-                                                                        'main_menu']))  # WARNING: Dynamic arguments can't be recognized!)
+                                                                        'main_menu']))  # WARNING: Dynamic arguments can't be recognized!
     except StopIteration:
         await  call.message.answer('Больше аргументов нет',
                                    reply_markup=InlineMarkups.create_im(2, ['Другие вопросы', 'Главное меню'],
                                                                         ['some callback',
-                                                                         'main_menu']))  # For testing purposes
+                                                                         'main_menu']))  # For testing purposes # WARNING!
 
 
 async def practice_mode(message: Message):
@@ -169,7 +167,6 @@ async def advice_mode(message: Message):
     await message.delete()
 
 
-# WARNING: JSON
 async def advice_mode2(message: Message):
     await message.reply(*find_value('advice', 'topic_description', 'topic_name', message.text),
                         reply_markup=ReplyMarkups.create_rm(3, True, *select_by_table_and_column('advice',

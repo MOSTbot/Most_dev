@@ -20,18 +20,17 @@ async def admin_start(message: Message):
                          reply_markup=InlineMarkups.create_im(1, ['Узнать больше о проекте'], ['more_about_project'],
                                                               ['https://relocation.guide/most']))
     await message.delete()
-    await message.answer("Вы являетесь Администратором бота", reply_markup=InlineMarkups.create_im(2,
-                                                                                                   [
-                                                                                                       'Добавить Администратора',
-                                                                                                       'Удалить Администратора',
-                                                                                                       'Список Администраторов',
-                                                                                                       'Последние 10 отзывов',
-                                                                                                       'Добавить раздел'],
-                                                                                                   ['admin_promote_ib',
-                                                                                                    'admin_remove_ib',
-                                                                                                    'admins_list_ib',
-                                                                                                    'last_10_feedbacks_ib',
-                                                                                                    'add_section_ib']))
+    await message.answer("Вы являетесь Администратором бота",
+                         reply_markup=InlineMarkups.create_im(2, ['Добавить Администратора',
+                                                                  'Удалить Администратора',
+                                                                  'Список Администраторов',
+                                                                  'Последние 10 отзывов',
+                                                                  'Добавить раздел'],
+                                                              ['admin_promote_ib',
+                                                               'admin_remove_ib',
+                                                               'admins_list_ib',
+                                                               'last_10_feedbacks_ib',
+                                                               'add_section_ib']))
 
 
 # ------------------- PROMOTE TO ADMIN -------------------
