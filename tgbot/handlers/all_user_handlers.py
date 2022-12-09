@@ -171,7 +171,7 @@ async def advice_mode(message: Message):
 
 # WARNING: JSON
 async def advice_mode2(message: Message):
-    await message.reply(find_value('advice', 'topic_description', 'topic_name', message.text),
+    await message.reply(*find_value('advice', 'topic_description', 'topic_name', message.text),
                         reply_markup=ReplyMarkups.create_rm(3, True, *select_by_table_and_column('advice',
                                                                                                  'topic_name')))
 
@@ -202,3 +202,4 @@ async def text_wasnt_found(message: Message):
     await  message.answer(
         'Извините, я не смог распознать вопрос. Попробуйте еще раз или воспользуйтесь меню ниже ⬇',
         reply_markup=ReplyMarkups.create_rm(2, True, *select_by_table_and_column('main_menu', 'main_menu_name')))
+    

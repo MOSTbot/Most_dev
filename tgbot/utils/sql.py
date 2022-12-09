@@ -25,6 +25,7 @@ assertion_name    TEXT    NOT NULL);""")
 cur.execute("""CREATE TABLE IF NOT EXISTS facts
 (fact_id          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 fact_name         TEXT    NOT NULL,
+ext_source        TEXT    NOT NULL,
 assertion_id      INTEGER NOT NULL,
 FOREIGN KEY (assertion_id) REFERENCES assertions (assertion_id));""")
 
@@ -34,8 +35,9 @@ question_name       TEXT  NOT NULL);""")
 
 cur.execute("""CREATE TABLE IF NOT EXISTS practice_answers
 (answer_id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-answer_name       TEXT    NOT NULL,
+answer_num        TEXT    NOT NULL,
 commentary        TEXT    NOT NULL,
+quality           INTEGER NOT NULL,
 pr_id             INTEGER NOT NULL,
 FOREIGN KEY (pr_id) REFERENCES practice_questions (pr_id));""")
 
@@ -49,6 +51,18 @@ cur.execute("""CREATE TABLE IF NOT EXISTS main_menu
 main_menu_name      TEXT  NOT NULL,
 description         TEXT);""")
 
+cur.execute("""CREATE TABLE IF NOT EXISTS a_assertions
+(a_assertion_id   INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+a_assertion_name  TEXT    NOT NULL,
+assertion_id      INTEGER NOT NULL,
+FOREIGN KEY (assertion_id) REFERENCES assertions (assertion_id));""")
+
+cur.execute("""CREATE TABLE IF NOT EXISTS a_facts
+(a_fact_id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+a_fact_name       TEXT    NOT NULL,
+a_ext_source      TEXT    NOT NULL,
+a_assertion_id    INTEGER NOT NULL,
+FOREIGN KEY (a_assertion_id) REFERENCES a_assertions (a_assertion_id));""")
 
 def select_by_table_and_column(table: str, col_name: str) -> list:
     rows = cur.execute(f"SELECT {col_name} FROM {table}").fetchall()
