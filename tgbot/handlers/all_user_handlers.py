@@ -18,7 +18,8 @@ def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(fsm_feedback, commands=['feedback'], state=None)
     dp.register_message_handler(fsm_confirm_feedback, state=FSMFeedback.feedback)
     dp.register_message_handler(fsm_send_feedback, state=FSMFeedback.send_feedback)
-    dp.register_message_handler(start_handler, commands=["start"], state="*")
+    dp.register_message_handler(start, commands=["start"], state="*")
+    dp.register_message_handler(menu_handler, commands=["menu"], state="*")
     dp.register_message_handler(chat_mode, commands=["chat"], state="*")
     dp.register_message_handler(chat_mode, Text(equals='💬 Режим диалога', ignore_case=True), state="*")
     dp.register_message_handler(questions, Text(equals=[*get_assertions()], ignore_case=True),
@@ -44,7 +45,7 @@ def user_log(user_id, message_text):
 
 # WARNING: Develop options for completing FSM. Not all state.finish() options have been explored
 async def fsm_confirm_feedback(message: Message, state: FSMContext):
-    if message.text in ['/start', '/chat', '/practice', '/advice', '/theory', '/feedback', '🤓 Оставить отзыв',
+    if message.text in ['/start', '/menu', '/chat', '/practice', '/advice', '/theory', '/feedback', '🤓 Оставить отзыв',
                         'Отмена']:
         await message.answer('Написание отзыва отменено пользователем',
                              reply_markup=ReplyMarkups.create_rm(2, True, *select_by_table_and_column('main_menu',
@@ -78,11 +79,29 @@ async def fsm_send_feedback(message: Message, state: FSMContext):  # TODO: Check
     return await state.finish()
 
 
-async def start_handler(message: Message):
+async def start(message: Message):
+    await message.answer_photo(photo=open('tgbot/assets/start.jpg', 'rb'))
+    await message.answer('<b>Мы ответственны за тех, кого приручила пропаганда</b>.\n'
+                         'Особенно за родных, любимых и друзей.\n\n'
+                         'Разве не достаточно просто сказать правду?\n'
+                         'Увы, многие сталкивались с тем, что '
+                '<b>правду не слышат или не хотят слышать</b>. Но это не повод сдаваться.\n\n'
+                'МОСТ — cовместный проект <a href="https://relocation.guide/">гайда в свободный мир</a> и XZ foundation. '
+                'Это сценарии разговоров с близкими о войне.\n\n'
+                'Их разработали волонтеры гайда <b>с опытом переубеждения</b> близких, а '
+                '<b>психологи, социологи и журналисты</b> добавили научную базу.\n\n'
+                'Разговор о войне не будет простым и быстрым.\n\n'
+                'Мы верим, что <b>экспертный подход, общественный вклад и эмпатия</b> помогут «вернуть связь» '
+                'с близкими и создать продукт, который основан на способности слышать, '
+                'мыслить и противостоять ложным мнениям.',
+                         reply_markup=InlineMarkups.create_im(1, ['Перейти в главное меню'], ['main_menu']))
+
+
+async def menu_handler(message: Message):
     # user_id = message.from_user.id
     # user_full_name = message.from_user.full_name
     # logging.info(f'{user_id=} {user_full_name=}')
-    user_log(message.from_user.id, message.text)
+    # user_log(message.from_user.id, message.text)
     await message.answer_photo(
         photo=open('tgbot/assets/menu.jpg', 'rb'),
         caption='Какое направление вы хотите запустить?',
@@ -90,7 +109,6 @@ async def start_handler(message: Message):
     await message.answer(select_main_menu_description(),
                          reply_markup=InlineMarkups.create_im(2, ['Узнать больше о проекте'], ['some callback'], [
                              'https://relocation.guide/most']))  # FIXME: The link needs to be replaced
-    await message.delete()
 
 
 async def chat_mode(message: Message):
@@ -113,7 +131,6 @@ async def chat_mode(message: Message):
                           'Мы рекомендуем использовать три части ответа вместе, но по отдельности они тоже работают.\n\n'
                           'Выберите одну из предложенных тем ниже или введите свою в поле для ввода,'
                           ' чтобы получить аргумент. Например, «Путин знает, что делает» или «Это война с НАТО» ⬇')
-    await message.delete()
 
 
 # WARNING: Catch exception 'Message text is empty' (Admin has not added any facts yet)
@@ -153,7 +170,6 @@ async def practice_mode(message: Message):
                           ' Мы собрали для вас 10 мифов о войне и для каждого подобрали 3 варианта ответа —'
                           ' выберите верные, а бот МОСТ даст подробные комментарии.',
                           reply_markup=InlineMarkups.create_im(2, ['Поехали! 🚀', 'Главное меню'], ['sc', 'main_menu']))
-    await message.delete()
 
 
 async def advice_mode(message: Message):
@@ -172,7 +188,6 @@ async def advice_mode2(message: Message):
                         reply_markup=ReplyMarkups.create_rm(3, True, *select_by_table_and_column('advice',
                                                                                                  'topic_name')))
 
-
 async def theory_mode(message: Message):
     await message.answer('📚', reply_markup=ReplyKeyboardRemove())  # FIXME: This message is only for keyboard remove
     await  message.answer_photo(
@@ -182,12 +197,11 @@ async def theory_mode(message: Message):
         reply_markup=InlineMarkups.create_im(2, ['Перейти в базу аргументов', 'Главное меню'],
                                              ['sc', 'main_menu'], ['https://relocation.guide/most',
                                                                    None]))  # FIXME: The link needs to be replaced
-    await message.delete()
 
 
 async def cb_home(call: CallbackQuery):
     await call.answer(cache_time=10)
-    await start_handler(call.message)
+    await menu_handler(call.message)
 
 
 async def cb_feedback(call: CallbackQuery):
