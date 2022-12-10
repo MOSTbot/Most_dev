@@ -7,7 +7,7 @@ from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 from tgbot.kb import ReplyMarkups, InlineMarkups
 from tgbot.utils import FSMFeedback, send_feedback, get_facts, get_assertions, select_by_table_and_column, \
-    select_main_menu_description, find_value
+    select_main_menu_description, get_a_facts
 from tgbot.utils.util_classes import MessageText
 
 mt = MessageText()
@@ -22,16 +22,20 @@ def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(menu_handler, commands=["menu"], state="*")
     dp.register_message_handler(chat_mode, commands=["chat"], state="*")
     dp.register_message_handler(chat_mode, Text(equals='💬 Режим диалога', ignore_case=True), state="*")
-    dp.register_message_handler(questions, Text(equals=[*get_assertions()], ignore_case=True),
-                                # WARNING: Here's the problem with dynamic update
+    dp.register_message_handler(questions, Text(equals=select_by_table_and_column('assertions', 'assertion_name'),
+                                                ignore_case=True),
+                                state="*")  # WARNING: Here's the problem with dynamic update
+    dp.register_message_handler(a_questions, Text(equals=select_by_table_and_column('a_assertions', 'a_assertion_name'),
+                                                  ignore_case=True),
                                 state="*")
+    dp.register_callback_query_handler(thematic_questions, text='thematic_questions', state="*")
     dp.register_callback_query_handler(cb_more_args, text='more_arguments', state="*")
     dp.register_callback_query_handler(cb_feedback, text='feedback', state="*")
     dp.register_message_handler(practice_mode, commands=["practice"], state="*")
     dp.register_message_handler(practice_mode, Text(equals='🏋️‍♂ Симулятор разговора', ignore_case=True), state="*")
     dp.register_message_handler(advice_mode, commands=["advice"], state="*")
     dp.register_message_handler(advice_mode, Text(equals='🧠 Психология разговора', ignore_case=True), state="*")
-    dp.register_message_handler(advice_mode2, Text(equals=[*select_by_table_and_column('advice', 'topic_name')]),
+    dp.register_message_handler(advice_mode2, Text(equals=select_by_table_and_column('advice', 'topic_name')),
                                 state="*")
     dp.register_message_handler(theory_mode, commands=["theory"], state="*")
     dp.register_message_handler(theory_mode, Text(equals='📚 База аргументов', ignore_case=True), state="*")
@@ -85,15 +89,15 @@ async def start(message: Message):
                          'Особенно за родных, любимых и друзей.\n\n'
                          'Разве не достаточно просто сказать правду?\n'
                          'Увы, многие сталкивались с тем, что '
-                '<b>правду не слышат или не хотят слышать</b>. Но это не повод сдаваться.\n\n'
-                'МОСТ — cовместный проект <a href="https://relocation.guide/">гайда в свободный мир</a> и XZ foundation. '
-                'Это сценарии разговоров с близкими о войне.\n\n'
-                'Их разработали волонтеры гайда <b>с опытом переубеждения</b> близких, а '
-                '<b>психологи, социологи и журналисты</b> добавили научную базу.\n\n'
-                'Разговор о войне не будет простым и быстрым.\n\n'
-                'Мы верим, что <b>экспертный подход, общественный вклад и эмпатия</b> помогут «вернуть связь» '
-                'с близкими и создать продукт, который основан на способности слышать, '
-                'мыслить и противостоять ложным мнениям.',
+                         '<b>правду не слышат или не хотят слышать</b>. Но это не повод сдаваться.\n\n'
+                         'МОСТ — cовместный проект <a href="https://relocation.guide/">гайда в свободный мир</a> и XZ foundation. '
+                         'Это сценарии разговоров с близкими о войне.\n\n'
+                         'Их разработали волонтеры гайда <b>с опытом переубеждения</b> близких, а '
+                         '<b>психологи, социологи и журналисты</b> добавили научную базу.\n\n'
+                         'Разговор о войне не будет простым и быстрым.\n\n'
+                         'Мы верим, что <b>экспертный подход, общественный вклад и эмпатия</b> помогут «вернуть связь» '
+                         'с близкими и создать продукт, который основан на способности слышать, '
+                         'мыслить и противостоять ложным мнениям.',
                          reply_markup=InlineMarkups.create_im(1, ['Перейти в главное меню'], ['main_menu']))
 
 
@@ -116,7 +120,7 @@ async def chat_mode(message: Message):
         photo=open('tgbot/assets/chat.jpg', 'rb'),
         caption='🟢 МОСТ работает в режиме диалога. Отправляйте фразу или вопрос в чат и получайте аргументы,'
                 ' которые помогают отделить ложь от правды. Оценивайте их силу, чтобы сделать МОСТ еще крепче.',
-        reply_markup=ReplyMarkups.create_rm(3, True, *get_assertions()))
+        reply_markup=ReplyMarkups.create_rm(3, True, *select_by_table_and_column('assertions', 'assertion_name')))
     await  message.answer('<i>Рассмотрим пример аргумента</i>\n\n'
                           'Собеседни_ца говорит вам: <b>«Мы многого не знаем, всё не так однозначно».</b>\n\n'
                           '<b>Фраза-мост — позволяет построить контакт с собеседником</b> ⬇\n'
@@ -136,8 +140,8 @@ async def chat_mode(message: Message):
 # WARNING: Catch exception 'Message text is empty' (Admin has not added any facts yet)
 async def questions(message: Message):  # These are callback-buttons!
     mt.message_text = message.text
-    mt.message_text = get_facts(mt.message_text)  # SQL option
-    await  message.reply(next(mt.message_text),
+    mt.generator = get_facts(mt.message_text)  # SQL option
+    await  message.reply(next(mt.generator),
                          reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы', '👍', '👎',
                                                                   'Оставить отзыв', 'Главное меню'],
                                                               ['more_arguments', 'some callback', 'some callback',
@@ -148,7 +152,7 @@ async def questions(message: Message):  # These are callback-buttons!
 async def cb_more_args(call: CallbackQuery):
     try:
         await call.answer(cache_time=5)
-        await call.message.answer(next(mt.message_text),
+        await call.message.answer(next(mt.generator),
                                   reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы', '👍', '👎',
                                                                            'Оставить отзыв', 'Главное меню'],
                                                                        ['more_arguments', 'some callback',
@@ -156,10 +160,33 @@ async def cb_more_args(call: CallbackQuery):
                                                                         'some callback', 'feedback',
                                                                         'main_menu']))  # WARNING: Dynamic arguments can't be recognized!
     except StopIteration:
-        await  call.message.answer('Больше аргументов нет',
-                                   reply_markup=InlineMarkups.create_im(2, ['Другие вопросы', 'Главное меню'],
-                                                                        ['some callback',
-                                                                         'main_menu']))  # For testing purposes # WARNING!
+        if mt.message_text in select_by_table_and_column('assertions', 'assertion_name'):
+            await  call.message.answer('Хотите посмотреть дополнительные вопросы по теме?',
+                                       reply_markup=InlineMarkups.create_im(2,
+                                                                            ['Другие вопросы по теме', 'Главное меню'],
+                                                                            ['thematic_questions',
+                                                                             'main_menu']))  # For testing purposes #
+        elif mt.message_text in select_by_table_and_column('a_assertions', 'a_assertion_name'):
+            await call.message.answer('Для более подробной информации,'
+                                      ' посетите <a href="https://relocation.guide/">наш сайт</a>',
+                                      reply_markup=InlineMarkups.create_im(1, ['Главное меню'], ['main_menu']))
+
+
+async def thematic_questions(call: CallbackQuery):
+    await call.answer(cache_time=5)
+    await call.message.answer('Дополнительные вопросы, касающиеся данной темы ⬇',
+                              reply_markup=ReplyMarkups.create_rm(3, True, *get_assertions(mt.message_text)))
+
+
+async def a_questions(message: Message):  # These are callback-buttons!
+    mt.message_text = message.text
+    mt.generator = get_a_facts(mt.message_text)  # SQL option
+    await  message.reply(next(mt.generator),
+                         reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы', '👍', '👎',
+                                                                  'Оставить отзыв', 'Главное меню'],
+                                                              ['more_arguments', 'some callback', 'some callback',
+                                                               'some callback', 'feedback',
+                                                               'main_menu']))  # WARNING: Dynamic arguments can't be recognized!
 
 
 async def practice_mode(message: Message):
@@ -184,9 +211,10 @@ async def advice_mode(message: Message):
 
 
 async def advice_mode2(message: Message):
-    await message.reply(*find_value('advice', 'topic_description', 'topic_name', message.text),
+    await message.reply(*select_by_table_and_column('advice', 'topic_description', 'topic_name', message.text),
                         reply_markup=ReplyMarkups.create_rm(3, True, *select_by_table_and_column('advice',
                                                                                                  'topic_name')))
+
 
 async def theory_mode(message: Message):
     await message.answer('📚', reply_markup=ReplyKeyboardRemove())  # FIXME: This message is only for keyboard remove

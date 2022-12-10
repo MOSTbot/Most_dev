@@ -7,7 +7,8 @@ from typing import Iterator
 
 @dataclass
 class MessageText:
-    message_text: str | Iterator[str] = None
+    message_text: str = None
+    generator: Iterator[str] = None
 
 
 class HashData:

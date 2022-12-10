@@ -4,7 +4,8 @@ from aiogram.types import Message, CallbackQuery
 
 from tgbot.kb import ReplyMarkups, InlineMarkups
 from tgbot.utils import create_admin, FSMAddAdmin, FSMDeleteAdmin, select_all_admins, last10_fb, \
-    FSMAddAssertion, check_if_item_exists, add_to_child_table, delete_from_table, add_to_table, get_assertions
+    FSMAddAssertion, check_if_item_exists, add_to_child_table, delete_from_table, add_to_table, \
+    select_by_table_and_column
 
 
 async def admin_start(message: Message):
@@ -13,15 +14,15 @@ async def admin_start(message: Message):
                          'Особенно за родных, любимых и друзей.\n\n'
                          'Разве не достаточно просто сказать правду?\n'
                          'Увы, многие сталкивались с тем, что '
-                '<b>правду не слышат или не хотят слышать</b>. Но это не повод сдаваться.\n\n'
-                'МОСТ — cовместный проект <a href="https://relocation.guide/">гайда в свободный мир</a> и XZ foundation. '
-                'Это сценарии разговоров с близкими о войне.\n\n'
-                'Их разработали волонтеры гайда <b>с опытом переубеждения</b> близких, а '
-                '<b>психологи, социологи и журналисты</b> добавили научную базу.\n\n'
-                'Разговор о войне не будет простым и быстрым.\n\n'
-                'Мы верим, что <b>экспертный подход, общественный вклад и эмпатия</b> помогут «вернуть связь» '
-                'с близкими и создать продукт, который основан на способности слышать, '
-                'мыслить и противостоять ложным мнениям.',
+                         '<b>правду не слышат или не хотят слышать</b>. Но это не повод сдаваться.\n\n'
+                         'МОСТ — cовместный проект <a href="https://relocation.guide/">гайда в свободный мир</a> и XZ foundation. '
+                         'Это сценарии разговоров с близкими о войне.\n\n'
+                         'Их разработали волонтеры гайда <b>с опытом переубеждения</b> близких, а '
+                         '<b>психологи, социологи и журналисты</b> добавили научную базу.\n\n'
+                         'Разговор о войне не будет простым и быстрым.\n\n'
+                         'Мы верим, что <b>экспертный подход, общественный вклад и эмпатия</b> помогут «вернуть связь» '
+                         'с близкими и создать продукт, который основан на способности слышать, '
+                         'мыслить и противостоять ложным мнениям.',
                          reply_markup=InlineMarkups.create_im(1, ['Перейти в главное меню'], ['main_menu']))
     await message.answer("Вы являетесь Администратором бота",
                          reply_markup=InlineMarkups.create_im(2, ['Добавить Администратора',
@@ -135,7 +136,8 @@ async def last_10_feedbacks(call: CallbackQuery):
 async def assertion_init(call: CallbackQuery):
     await call.answer(cache_time=10)
     await call.message.answer('Выберете существующее утверждение или напишите новое',
-                              reply_markup=ReplyMarkups.create_rm(3, True, *get_assertions()))
+                              reply_markup=ReplyMarkups
+                              .create_rm(3, True, *select_by_table_and_column('assertions', 'assertion_name')))
     await FSMAddAssertion.initialize.set()
 
 

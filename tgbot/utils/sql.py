@@ -63,16 +63,15 @@ a_ext_source      TEXT    NOT NULL,
 a_assertion_id    INTEGER NOT NULL,
 FOREIGN KEY (a_assertion_id) REFERENCES a_assertions (a_assertion_id));""")
 
-def select_by_table_and_column(table: str, col_name: str) -> list:
-    rows = cur.execute(f"SELECT {col_name} FROM {table}").fetchall()
-    return [row[0] for row in rows]
 
-
-def find_value(table: str, target_column: str, col_value_is_taken_from: str,
-               value: str, fetchall: bool = False) -> (str, tuple):
-    res = cur.execute(f"SELECT {target_column} FROM {table} WHERE {col_value_is_taken_from} IS '{value}'")
-    res = res.fetchall() if fetchall else res.fetchone()
-    return 'Ничего не было найдено' if res is None or not list(res) else res
+def select_by_table_and_column(table: str, column: str, col_value_is_taken_from: str = None, value: int = None) -> list:
+    if value is None:
+        res = cur.execute(f"SELECT {column} FROM {table}").fetchall()
+    elif col_value_is_taken_from is not None:
+        res = cur.execute(f"SELECT {column} FROM {table} WHERE {col_value_is_taken_from} IS '{value}'").fetchall()
+    else:
+        raise ValueError('col_value_is_taken_from and value must be set')
+    return [row[0] for row in res]
 
 
 def select_main_menu_description() -> str:
@@ -166,6 +165,16 @@ def get_facts(message_text: str) -> Iterator[str]:
         yield facts[i][0]
 
 
-def get_assertions():
-    assertions = cur.execute("SELECT assertion_name FROM assertions").fetchall()
+def get_a_facts(message_text: str) -> Iterator[str]:
+    facts = cur.execute(f"SELECT a_fact_name FROM a_facts "
+                        f"LEFT JOIN a_assertions aa ON aa.a_assertion_id = a_facts.a_assertion_id "
+                        f"WHERE a_assertion_name IS '{message_text}'").fetchall()
+    for i in range(len(facts)):
+        yield facts[i][0]
+
+
+def get_assertions(assertion_id=None) -> list:
+    assertions = cur.execute(f"SELECT a_assertion_name FROM a_assertions"
+                             f" LEFT JOIN assertions a ON a.assertion_id = a_assertions.assertion_id"
+                             f" WHERE assertion_name IS '{assertion_id}'").fetchall()
     return [assertions[i][0] for i in range(len(assertions))]
