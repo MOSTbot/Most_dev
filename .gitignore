@@ -62,3 +62,4 @@ venv.bak/
 .idea/*
 .env
 /bot.db
+/sandbox.py

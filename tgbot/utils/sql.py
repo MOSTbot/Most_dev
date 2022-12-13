@@ -6,6 +6,7 @@ from tgbot.utils.util_classes import HashData
 db = sq.connect('bot.db')
 cur = db.cursor()
 
+# WARNING: Use cur.executescript!
 cur.execute("""CREATE TABLE IF NOT EXISTS list_of_admins
      (a_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
       admin_name TEXT NOT NULL,
@@ -140,8 +141,8 @@ def all_admins_list() -> list:
 
 def send_feedback(user_id: str = None, datetime: str = None, feedback: str = None) -> None:
     hash_user_id = HashData.hash_data(user_id)
-    cur.execute('INSERT INTO user_feedback (user_id, feedback_datetime, user_feedback) VALUES(?, ?, ?)',
-                (hash_user_id, datetime, feedback))
+    cur.execute('INSERT INTO user_feedback (user_id, feedback_datetime, user_feedback) '
+                'VALUES(?, ?, ?)', (hash_user_id, datetime, feedback))
 
     db.commit()
 
@@ -178,3 +179,30 @@ def get_assertions(assertion_id=None) -> list:
                              f" LEFT JOIN assertions a ON a.assertion_id = a_assertions.assertion_id"
                              f" WHERE assertion_name IS '{assertion_id}'").fetchall()
     return [assertions[i][0] for i in range(len(assertions))]
+
+
+def get_practice_questions() -> Iterator[str]:
+    practice_questions = cur.execute("SELECT question_name, pr_id "
+                                     "FROM practice_questions").fetchall()
+    for i in range(len(practice_questions)):
+        yield practice_questions[i][0], practice_questions[i][1]
+
+
+def get_practice_answers(p_key: str) -> list:
+    return cur.execute("SELECT commentary, quality "
+                       "FROM practice_answers "
+                       "LEFT JOIN practice_questions pq "
+                       "ON pq.pr_id = practice_answers.pr_id "
+                       f"WHERE pq.pr_id IS '{p_key}';").fetchall()
+
+
+def rnd_questions() -> list:
+    random_questions = cur.execute("SELECT * "
+                                   "FROM (SELECT assertion_name "
+                                   "FROM assertions "
+                                   "UNION "
+                                   "SELECT a_assertion_name "
+                                   "FROM a_assertions) "
+                                   "ORDER BY RANDOM() "
+                                   "LIMIT 6;").fetchall()
+    return [random_questions[i][0] for i in range(len(random_questions))]
