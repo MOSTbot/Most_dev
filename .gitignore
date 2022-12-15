@@ -63,3 +63,4 @@ venv.bak/
 .env
 /bot.db
 /sandbox.py
+/.mypy_cache/

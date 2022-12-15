@@ -1,62 +1,49 @@
-import asyncio, logging
+import asyncio
+import logging
+
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 from tgbot import load_config
-from tgbot.filters import SUFilter
-from tgbot.utils import set_default_commands, db
-from tgbot.handlers import register_admin_handlers, register_user_handlers, register_echo
-from tgbot.middlewares.environment import EnvironmentMiddleware, AdminsMiddleware
+from tgbot.handlers.registration import register_all_middlewares, register_all_filters, register_all_handlers, \
+    register_all_bot_commands
+
+from tgbot.utils import db, Disp
+
+config = load_config(".env")
+storage = MemoryStorage()
+bot = Bot(token=config.tg_bot.token, parse_mode='HTML')
+Disp.disp = Dispatcher(bot, storage=storage)
 
 
-def register_all_middlewares(dp, config):
-    dp.setup_middleware(EnvironmentMiddleware(config=config))
-    dp.setup_middleware(AdminsMiddleware())
+def update_dispatcher() -> None:
+    Disp.disp = Dispatcher(bot, storage=storage)
 
 
-def register_all_filters(dp):
-    dp.filters_factory.bind(SUFilter)
-
-
-def register_all_handlers(dp):
-    register_admin_handlers(dp)
-    register_user_handlers(dp)
-    register_echo(dp)
-
-
-async def register_all_bot_commands(bot: Bot):
-    await set_default_commands(bot)
-
-
-async def main():
+async def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
         format=u'%(filename)s:%(lineno)d #%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s',
     )
     logger.info("Starting bot")
-    config = load_config(".env")
-
-    storage = MemoryStorage()
-    bot = Bot(token=config.tg_bot.token, parse_mode='HTML')
-    dp = Dispatcher(bot, storage=storage)
 
     bot['config'] = config
 
-    register_all_middlewares(dp, config)
-    register_all_filters(dp)
-    register_all_handlers(dp)
+    register_all_middlewares(Disp.disp)
+    register_all_filters(Disp.disp)
+    register_all_handlers(Disp.disp)
 
     # Commands
     await register_all_bot_commands(bot)
 
     # Start polling
     try:
-        await dp.start_polling()
+        await Disp.disp.start_polling()
     finally:
-        await dp.storage.close()
-        await dp.storage.wait_closed()
+        await Disp.disp.storage.close()
+        await Disp.disp.storage.wait_closed()
         await bot.session.close()
-        await db.close() # WARNING! Closing Database
+        await db.close() # type: ignore
 
 
 logger = logging.getLogger(__name__)

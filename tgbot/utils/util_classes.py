@@ -2,18 +2,25 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from typing import Iterator
+from typing import Any
+
+from aiogram import Dispatcher
 
 
 @dataclass
 class MessageText:
-    message_text: str = None
-    generator: Iterator[str] = None
-    value: tuple = None
-    p_answers: list = None
-    p_key: str = None
-    flag: bool = False
+    value: Any
+    message_text: Any
+    generator: Any
+    p_answers: Any
+    p_key: int
     score: int = 0
+    flag: bool = False
+
+
+@dataclass
+class Disp:
+    disp: Dispatcher = None
 
 
 class HashData:

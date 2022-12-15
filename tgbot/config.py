@@ -1,7 +1,8 @@
-from dataclasses import dataclass
-from environs import Env
+from __future__ import annotations
 
-from tgbot.utils import all_admins_list
+from dataclasses import dataclass
+
+from environs import Env
 
 
 @dataclass
@@ -15,7 +16,7 @@ class Config:
     tg_bot: TgBot
 
 
-def load_config(path: str = None):
+def load_config(path: str | None) -> Config:
     env = Env()
     env.read_env(path)
 

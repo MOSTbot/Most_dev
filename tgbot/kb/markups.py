@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 
 
@@ -10,7 +12,7 @@ class ReplyMarkups:
 
 class InlineMarkups:
     @staticmethod
-    def create_im(row_width: int, button_name: list, callback: list, url: list = None) -> InlineKeyboardMarkup:
+    def create_im(row_width: int, button_name: list, callback: list, url: list | None = None) -> InlineKeyboardMarkup:
         if len(button_name) != len(callback):
             raise ValueError('Кнопок должно быть столько же сколько их коллбэков!')
         dynamic_im = []
