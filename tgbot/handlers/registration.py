@@ -4,12 +4,12 @@ from tgbot.filters import SUFilter
 from tgbot.handlers import register_main_menu_handlers, register_admin_handlers, register_feedback_handlers, \
     register_chat_handlers, register_practice_handlers, register_advice_handlers, register_theory_handlers, \
     register_other_handlers, register_echo
-from tgbot.middlewares.environment import AdminsMiddleware
+from tgbot.middlewares.environment import LoggingMiddleware
 from tgbot.utils import set_default_commands
 
 
 def register_all_middlewares(dp: Dispatcher) -> None:
-    dp.setup_middleware(AdminsMiddleware())
+    dp.setup_middleware(LoggingMiddleware())
 
 
 def register_all_filters(dp: Dispatcher) -> None:

@@ -4,7 +4,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery
 
 from tgbot.kb import ReplyMarkups
-from tgbot.utils import FSMFeedback, SQLRequests, SQLInserts
+from tgbot.utils import FSMFeedback, SQLRequests, SQLInserts, SectionName
 
 
 def register_feedback_handlers(dp: Dispatcher) -> None:
@@ -16,6 +16,7 @@ def register_feedback_handlers(dp: Dispatcher) -> None:
 
 
 async def fsm_feedback(message: Message) -> None:
+    SectionName.s_name = 'Оставить отзыв'
     await  message.answer(
         'Напишите отзыв о нашем проекте ⬇', reply_markup=ReplyMarkups.create_rm(1, True, 'Отмена'))
     await FSMFeedback.feedback.set()  # state: feedback

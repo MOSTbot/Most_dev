@@ -9,23 +9,23 @@ from tgbot.utils import FSMAddAdmin, FSMDeleteAdmin, FSMAddAssertion, SQLInserts
 
 
 def register_admin_handlers(dp: Dispatcher) -> None:
-    dp.register_callback_query_handler(update_disp, text='update_dispatcher', state=None, is_su=True)
+    dp.register_callback_query_handler(update_disp, text='update_dispatcher', state='*', is_su=True)
     dp.register_message_handler(admin_start, commands=["start"], state=None, is_su=True)
     # ------------------- PROMOTE TO ADMIN -------------------
-    dp.register_callback_query_handler(add_new_admin, text='admin_promote_ib', state=None, is_su=True)
+    dp.register_callback_query_handler(add_new_admin, text='admin_promote_ib', state='*', is_su=True)
     dp.register_message_handler(new_admin_id, state=FSMAddAdmin.add_admin_id, is_su=True)
     dp.register_message_handler(new_admin_name, state=FSMAddAdmin.add_admin_name, is_su=True)
     dp.register_message_handler(new_admin_confirm, state=FSMAddAdmin.confirm, is_su=True)
     # --------------------- REMOVE ADMIN ---------------------
-    dp.register_callback_query_handler(delete_admin_from_list, text='admin_remove_ib', state=None, is_su=True)
+    dp.register_callback_query_handler(delete_admin_from_list, text='admin_remove_ib', state='*', is_su=True)
     dp.register_message_handler(delete_admin_id, state=FSMDeleteAdmin.delete_admin_id, is_su=True)
     dp.register_message_handler(delete_admin_confirm, state=FSMDeleteAdmin.confirm, is_su=True)
     # ------------------- SELECT ALL ADMINS ------------------
-    dp.register_callback_query_handler(select_admins, text='admins_list_ib', state=None, is_su=True)
+    dp.register_callback_query_handler(select_admins, text='admins_list_ib', state='*', is_su=True)
     # ------------------- LAST 10 FEEDBACKS ------------------
-    dp.register_callback_query_handler(last_10_feedbacks, text='last_10_feedbacks_ib', state=None, is_su=True)
+    dp.register_callback_query_handler(last_10_feedbacks, text='last_10_feedbacks_ib', state='*', is_su=True)
     # --------------------- ADD ASSERTION --------------------
-    dp.register_callback_query_handler(assertion_init, text='add_section_ib', state=None, is_su=True)
+    dp.register_callback_query_handler(assertion_init, text='add_section_ib', state='*', is_su=True)
     dp.register_message_handler(check_assertion, state=FSMAddAssertion.initialize, is_su=True)
     dp.register_message_handler(add__assertion, state=FSMAddAssertion.add_assertion, is_su=True)
     dp.register_message_handler(facts_init, state=FSMAddAssertion.facts_init, is_su=True)

@@ -9,13 +9,18 @@ from aiogram import Dispatcher
 
 @dataclass
 class MessageText:
-    value: Any
-    message_text: Any
-    generator: Any
-    p_answers: Any
     p_key: int
+    value: Any = None
+    message_text: Any = None
+    p_answers: Any = None
+    generator: Any = None
     score: int = 0
     flag: bool = False
+
+
+@dataclass
+class SectionName:
+    s_name: str | None = None
 
 
 @dataclass

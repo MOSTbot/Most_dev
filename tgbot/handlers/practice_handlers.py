@@ -6,7 +6,7 @@ from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 from tgbot.kb import InlineMarkups, ReplyMarkups
 from tgbot.utils import SQLRequests
-from tgbot.utils.util_classes import MessageText
+from tgbot.utils.util_classes import MessageText, SectionName
 
 
 def register_practice_handlers(dp: Dispatcher) -> None:
@@ -21,6 +21,8 @@ def register_practice_handlers(dp: Dispatcher) -> None:
 
 
 async def practice_mode(message: Message) -> None:
+    SectionName.s_name = 'Симулятор разговора'
+    MessageText.flag, MessageText.score, MessageText.generator, MessageText.value = False, 0, None, None
     await  message.answer_photo(
         photo=open('tgbot/assets/practice.jpg', 'rb'),
         caption='🟢 МОСТ работает в режиме симулятор разговора.', reply_markup=ReplyKeyboardRemove())
@@ -99,6 +101,5 @@ async def practice_continue(call: CallbackQuery) -> None:
 
 async def do_it_again(call: CallbackQuery) -> None:
     await call.answer(cache_time=5)
-    MessageText.flag = False
-    MessageText.score = 0
-    await practice_mode(call.message)
+    MessageText.flag, MessageText.score, MessageText.generator, MessageText.value = False, 0, None, None
+    await practice_start(call)

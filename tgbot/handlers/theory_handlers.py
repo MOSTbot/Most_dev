@@ -3,6 +3,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove
 
 from tgbot.kb import InlineMarkups
+from tgbot.utils import SectionName
 
 
 def register_theory_handlers(dp: Dispatcher) -> None:
@@ -11,6 +12,7 @@ def register_theory_handlers(dp: Dispatcher) -> None:
 
 
 async def theory_mode(message: Message) -> None:
+    SectionName.s_name = 'База аргументов'
     await message.answer('📚', reply_markup=ReplyKeyboardRemove())  # FIXME: This message is only for keyboard remove
     await  message.answer_photo(
         photo=open('tgbot/assets/theory.jpg', 'rb'),

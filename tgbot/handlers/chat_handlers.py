@@ -2,9 +2,10 @@ from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery
 
+from tgbot.handlers import main_menu
 from tgbot.kb import ReplyMarkups, InlineMarkups
 from tgbot.utils import SQLRequests
-from tgbot.utils.util_classes import MessageText
+from tgbot.utils.util_classes import MessageText, SectionName
 
 
 def register_chat_handlers(dp: Dispatcher) -> None:
@@ -22,6 +23,7 @@ def register_chat_handlers(dp: Dispatcher) -> None:
 
 
 async def chat_mode(message: Message) -> None:
+    SectionName.s_name = 'Режим диалога'
     await  message.answer_photo(
         photo=open('tgbot/assets/chat.jpg', 'rb'),
         caption='🟢 МОСТ работает в режиме диалога. Отправляйте фразу или вопрос в чат и получайте аргументы,'

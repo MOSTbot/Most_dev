@@ -3,7 +3,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove
 
 from tgbot.kb import ReplyMarkups
-from tgbot.utils import SQLRequests
+from tgbot.utils import SQLRequests, SectionName
 
 
 def register_advice_handlers(dp: Dispatcher) -> None:
@@ -14,6 +14,7 @@ def register_advice_handlers(dp: Dispatcher) -> None:
 
 
 async def advice_mode(message: Message) -> None:
+    SectionName.s_name = 'Психология разговора'
     await  message.answer_photo(
         photo=open('tgbot/assets/advice.jpg', 'rb'),
         caption='🟢 Собрали советы психологов о том, как не сойти с ума и говорить о войне с близкими,'
