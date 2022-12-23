@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import logging.handlers
 
 from aiogram.dispatcher.middlewares import BaseMiddleware
 from aiogram.types import CallbackQuery, Message
@@ -34,13 +35,15 @@ reply_list = [*SQLRequests.select_by_table_and_column('assertions', 'assertion_n
 #         return
 
 
+# noinspection PyUnusedLocal
 class LoggingMiddleware(BaseMiddleware):
     def __init__(self, logger: logging.Logger | str = __name__) -> None:
         if not isinstance(logger, logging.Logger):
             logger = logging.getLogger(logger)
             logger.setLevel(logging.INFO)
             sh = logging.StreamHandler()
-            fh = logging.FileHandler('data.txt', encoding='UTF-8', mode='w')
+            fh = logging.handlers.RotatingFileHandler('statistics.txt', mode='a', maxBytes=10 ** 7, backupCount=10,
+                                                      encoding='UTF-8')
             formatter = logging.Formatter('%(asctime)s|%(message)s', datefmt='%m/%d/%Y %I:%M:%S')
             sh.setFormatter(formatter)
             fh.setFormatter(formatter)

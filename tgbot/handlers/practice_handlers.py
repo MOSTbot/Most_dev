@@ -4,6 +4,7 @@ from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
+from tgbot.handlers import main_menu
 from tgbot.kb import InlineMarkups, ReplyMarkups
 from tgbot.utils import SQLRequests
 from tgbot.utils.util_classes import MessageText, SectionName
@@ -66,6 +67,9 @@ async def practice_reaction(call: CallbackQuery) -> None:
 
 
 async def practice_continue(call: CallbackQuery) -> None:
+    if MessageText.generator is None:
+        await main_menu(call.message)
+        return
     try:
         await call.answer(cache_time=5)
         cases = InlineMarkups.create_im(3, ['1', '2', '3'], ['1', '2', '3'])

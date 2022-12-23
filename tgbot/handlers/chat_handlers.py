@@ -23,7 +23,7 @@ def register_chat_handlers(dp: Dispatcher) -> None:
 
 
 async def chat_mode(message: Message) -> None:
-    SectionName.s_name = 'Режим диалога'
+    SectionName.s_name = 'Режим диалога'  # for logging purposes
     await  message.answer_photo(
         photo=open('tgbot/assets/chat.jpg', 'rb'),
         caption='🟢 МОСТ работает в режиме диалога. Отправляйте фразу или вопрос в чат и получайте аргументы,'
@@ -53,20 +53,25 @@ async def assertions(message: Message) -> None:  # These are callback-buttons!
     await  message.reply(next(MessageText.generator),
                          reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы', '👍', '👎',
                                                                   'Оставить отзыв', 'Главное меню'],
-                                                              ['more_arguments', 'thematic_questions', 'some callback',
-                                                               'some callback', 'feedback',
+                                                              ['more_arguments', 'thematic_questions', 'like_btn',
+                                                               'dislike_btn', 'feedback',
                                                                'main_menu']))
 
 
 async def cb_more_args(call: CallbackQuery) -> None:
     try:
         await call.answer(cache_time=5)
-        await call.message.answer(next(MessageText.generator),
-                                  reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы', '👍', '👎',
-                                                                           'Оставить отзыв', 'Главное меню'],
-                                                                       ['more_arguments', 'thematic_questions',
-                                                                        'some callback', 'some callback', 'feedback',
-                                                                        'main_menu']))
+        try:
+            await call.message.answer(next(MessageText.generator),
+                                      reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы',
+                                                                               '👍', '👎',
+                                                                               'Оставить отзыв', 'Главное меню'],
+                                                                           ['more_arguments', 'thematic_questions',
+                                                                            'some callback', 'some callback',
+                                                                            'feedback', 'main_menu']))
+        except TypeError:
+            await main_menu(call.message)
+
     except StopIteration:
         if MessageText.message_text in SQLRequests.select_by_table_and_column('assertions', 'assertion_name'):
             await  call.message.answer('Хотите посмотреть дополнительные вопросы по теме?',
@@ -81,20 +86,29 @@ async def cb_more_args(call: CallbackQuery) -> None:
 
 async def thematic_questions(call: CallbackQuery) -> None:
     await call.answer(cache_time=5)
-    await call.message.answer('Дополнительные вопросы, касающиеся данной темы ⬇',
-                              reply_markup=ReplyMarkups.create_rm(2, True, *SQLRequests.get_assertions(
-                                  MessageText.message_text)))
+    if not SQLRequests.get_assertions(MessageText.message_text):
+        await call.message.answer('Раздел находится в разработке',
+                                  reply_markup=InlineMarkups.create_im(1, ['Главное меню'], ['main_menu']))
+    else:
+        await call.message.answer('Дополнительные вопросы, касающиеся данной темы ⬇',
+                                  reply_markup=ReplyMarkups.create_rm(2, True, *SQLRequests.get_assertions(
+                                      MessageText.message_text)))
 
 
 async def a_questions(message: Message) -> None:  # These are callback-buttons!
     MessageText.message_text = message.text
     MessageText.generator = SQLRequests.get_a_facts(MessageText.message_text)
-    await  message.reply(next(MessageText.generator),
-                         reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы', '👍', '👎',
-                                                                  'Оставить отзыв', 'Главное меню'],
-                                                              ['more_arguments', 'random_questions', 'some callback',
-                                                               'some callback', 'feedback',
-                                                               'main_menu']))  # WARNING: Dynamic arguments can't be recognized!
+    try:
+        await  message.reply(next(MessageText.generator),
+                             reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы', '👍', '👎',
+                                                                      'Оставить отзыв', 'Главное меню'],
+                                                                  ['more_arguments', 'random_questions',
+                                                                   'some callback',
+                                                                   'some callback', 'feedback',
+                                                                   'main_menu']))  # WARNING: Dynamic arguments can't be recognized!
+    except StopIteration:
+        await message.answer('Раздел находится в разработке', reply_markup=InlineMarkups.create_im(1, ['Главное меню'],
+                                                                                                   ['main_menu']))
 
 
 async def random_questions(call: CallbackQuery) -> None:

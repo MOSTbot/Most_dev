@@ -12,12 +12,12 @@ def register_theory_handlers(dp: Dispatcher) -> None:
 
 
 async def theory_mode(message: Message) -> None:
-    SectionName.s_name = 'База аргументов'
+    SectionName.s_name = 'База аргументов'  # for logging purposes
     await message.answer('📚', reply_markup=ReplyKeyboardRemove())  # FIXME: This message is only for keyboard remove
     await  message.answer_photo(
         photo=open('tgbot/assets/theory.jpg', 'rb'),
         caption='Энциклопедия борца с пропагандой — самые полезные статьи, видео и аргументы.'
                 ' Для тех, кто хочет детально разобраться в том, что происходит.',
         reply_markup=InlineMarkups.create_im(2, ['Перейти в базу аргументов', 'Главное меню'],
-                                             ['sc', 'main_menu'], ['https://relocation.guide/most',
-                                                                   None]))  # FIXME: The link needs to be replaced
+                                             ['arguments_base', 'main_menu'], ['https://relocation.guide/most',
+                                                                               None]))  # FIXME: The link needs to be replaced

@@ -4,16 +4,17 @@ from aiogram.types import Message
 
 from tgbot.kb import InlineMarkups, ReplyMarkups
 from tgbot.utils import SQLRequests
-from tgbot.utils.util_classes import MessageText
+from tgbot.utils.util_classes import MessageText, SectionName
 
 
 def register_main_menu_handlers(dp: Dispatcher) -> None:
     dp.register_message_handler(start, commands=["start"], state=None)
-    dp.register_message_handler(menu_handler, commands=["menu"], state=None)
-    dp.register_message_handler(menu_handler, Text(contains='Главное меню', ignore_case=True), state=None)
+    dp.register_message_handler(main_menu, commands=["menu"], state=None)
+    dp.register_message_handler(main_menu, Text(contains='Главное меню', ignore_case=True), state=None)
 
 
 async def start(message: Message) -> None:
+    SectionName.s_name = 'Стартовое меню'  # for logging purposes
     await message.answer_photo(photo=open('tgbot/assets/start.jpg', 'rb'))
     await message.answer('<b>Мы ответственны за тех, кого приручила пропаганда</b>.\n'
                          'Особенно за родных, любимых и друзей.\n\n'
@@ -31,12 +32,8 @@ async def start(message: Message) -> None:
                          reply_markup=InlineMarkups.create_im(1, ['Перейти в главное меню'], ['main_menu']))
 
 
-async def menu_handler(message: Message) -> None:
+async def main_menu(message: Message) -> None:
     MessageText.flag = False
-    # user_id = message.from_user.id
-    # user_full_name = message.from_user.full_name
-    # logging.info(f'{user_id=} {user_full_name=}')
-    # user_log(message.from_user.id, message.text)
     await message.answer_photo(
         photo=open('tgbot/assets/menu.jpg', 'rb'),
         caption='Какое направление вы хотите запустить?',

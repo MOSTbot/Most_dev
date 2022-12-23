@@ -14,7 +14,7 @@ def register_advice_handlers(dp: Dispatcher) -> None:
 
 
 async def advice_mode(message: Message) -> None:
-    SectionName.s_name = 'Психология разговора'
+    SectionName.s_name = 'Психология разговора'  # for logging purposes
     await  message.answer_photo(
         photo=open('tgbot/assets/advice.jpg', 'rb'),
         caption='🟢 Собрали советы психологов о том, как не сойти с ума и говорить о войне с близкими,'

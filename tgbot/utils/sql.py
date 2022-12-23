@@ -137,7 +137,7 @@ class SQLRequests:
                               "DESC LIMIT 10").fetchall()
         string = ''
         for i in last_10:
-            string = f'{string}Последние 5 цифр хеша: <b>{i[1][59:]}</b>\nДата и время: <b>{i[2]}</b>\nОтзыв: <b>{i[3]}</b>\n\n'
+            string = f'{string}Последние 10 цифр хеша: <b>{i[1]}</b>\nДата и время: <b>{i[2]}</b>\nОтзыв: <b>{i[3]}</b>\n\n'
         if string == '':
             return 'Список отзывов пока пуст 😶'
         else:
@@ -224,7 +224,7 @@ class SQLInserts:
 
     @staticmethod
     async def create_admin(admin_id: str | int, admin_name: None | str = None) -> bool:
-        hash_admin_id = HashData.hash_data(admin_id)
+        hash_admin_id = HashData.hash_data(admin_id)[54:]
         if SQLRequests.check_if_item_exists(table='list_of_admins', column='admin_id', value=hash_admin_id):
             return False
         cur.execute('INSERT INTO list_of_admins (admin_name, admin_id) '
@@ -234,7 +234,7 @@ class SQLInserts:
 
     @staticmethod
     def send_feedback(user_id: str = '', datetime: str = '', feedback: str = '') -> None:
-        hash_user_id = HashData.hash_data(user_id)
+        hash_user_id = HashData.hash_data(user_id)[54:]
         cur.execute('INSERT INTO user_feedback (user_id, feedback_datetime, user_feedback) '
                     'VALUES(?, ?, ?)', (hash_user_id, datetime, feedback))
         db.commit()

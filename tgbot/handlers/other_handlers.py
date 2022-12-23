@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from logging import info
-
 from aiogram import Dispatcher
 from aiogram.types import Message, CallbackQuery
 
-from tgbot.handlers import menu_handler
+from tgbot.handlers import main_menu
 from tgbot.kb import ReplyMarkups
 from tgbot.utils import SQLRequests
 
@@ -15,13 +13,9 @@ def register_other_handlers(dp: Dispatcher) -> None:
     dp.register_callback_query_handler(cb_home, text='main_menu', state=None)
 
 
-def user_log(user_id: str | int, message_text: str) -> None:
-    return info(f'{user_id=} {message_text=}')
-
-
 async def cb_home(call: CallbackQuery) -> None:
     await call.answer(cache_time=5)
-    await menu_handler(call.message)
+    await main_menu(call.message)
 
 
 async def text_wasnt_found(message: Message) -> None:

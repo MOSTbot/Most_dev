@@ -16,7 +16,7 @@ def register_feedback_handlers(dp: Dispatcher) -> None:
 
 
 async def fsm_feedback(message: Message) -> None:
-    SectionName.s_name = 'Оставить отзыв'
+    SectionName.s_name = 'Оставить отзыв'  # for logging purposes
     await  message.answer(
         'Напишите отзыв о нашем проекте ⬇', reply_markup=ReplyMarkups.create_rm(1, True, 'Отмена'))
     await FSMFeedback.feedback.set()  # state: feedback
