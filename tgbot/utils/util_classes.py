@@ -13,7 +13,8 @@ class MessageText:
     value: Any = None
     message_text: Any = None
     p_answers: Any = None
-    generator: Any = None
+    c_generator: Any = None # /chat generator
+    p_generator: Any = None # /practice generator
     score: int = 0
     flag: bool = False
 

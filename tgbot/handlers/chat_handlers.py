@@ -49,8 +49,8 @@ async def chat_mode(message: Message) -> None:
 # WARNING: Catch exception 'Message text is empty' (Admin has not added any facts yet)
 async def assertions(message: Message) -> None:  # These are callback-buttons!
     MessageText.message_text = message.text
-    MessageText.generator = SQLRequests.get_facts(MessageText.message_text)  # SQL option
-    await  message.reply(next(MessageText.generator),
+    MessageText.c_generator = SQLRequests.get_facts(MessageText.message_text)  # SQL option
+    await  message.reply(next(MessageText.c_generator),
                          reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы', '👍', '👎',
                                                                   'Оставить отзыв', 'Главное меню'],
                                                               ['more_arguments', 'thematic_questions', 'like_btn',
@@ -62,7 +62,7 @@ async def cb_more_args(call: CallbackQuery) -> None:
     try:
         await call.answer(cache_time=5)
         try:
-            await call.message.answer(next(MessageText.generator),
+            await call.message.answer(next(MessageText.c_generator),
                                       reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы',
                                                                                '👍', '👎',
                                                                                'Оставить отзыв', 'Главное меню'],
@@ -86,20 +86,16 @@ async def cb_more_args(call: CallbackQuery) -> None:
 
 async def thematic_questions(call: CallbackQuery) -> None:
     await call.answer(cache_time=5)
-    if not SQLRequests.get_assertions(MessageText.message_text):
-        await call.message.answer('Раздел находится в разработке',
-                                  reply_markup=InlineMarkups.create_im(1, ['Главное меню'], ['main_menu']))
-    else:
-        await call.message.answer('Дополнительные вопросы, касающиеся данной темы ⬇',
-                                  reply_markup=ReplyMarkups.create_rm(2, True, *SQLRequests.get_assertions(
-                                      MessageText.message_text)))
+    await call.message.answer('Дополнительные вопросы, касающиеся данной темы ⬇',
+                              reply_markup=ReplyMarkups.create_rm(2, True, *SQLRequests.get_assertions(
+                                  MessageText.message_text)))
 
 
 async def a_questions(message: Message) -> None:  # These are callback-buttons!
     MessageText.message_text = message.text
-    MessageText.generator = SQLRequests.get_a_facts(MessageText.message_text)
+    MessageText.c_generator = SQLRequests.get_a_facts(MessageText.message_text)
     try:
-        await  message.reply(next(MessageText.generator),
+        await  message.reply(next(MessageText.c_generator),
                              reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы', '👍', '👎',
                                                                       'Оставить отзыв', 'Главное меню'],
                                                                   ['more_arguments', 'random_questions',

@@ -22,8 +22,8 @@ def register_practice_handlers(dp: Dispatcher) -> None:
 
 
 async def practice_mode(message: Message) -> None:
-    SectionName.s_name = 'Симулятор разговора'
-    MessageText.flag, MessageText.score, MessageText.generator, MessageText.value = False, 0, None, None
+    SectionName.s_name = 'Симулятор разговора'  # for logging purposes
+    MessageText.flag, MessageText.score, MessageText.p_generator, MessageText.value = False, 0, None, None
     await  message.answer_photo(
         photo=open('tgbot/assets/practice.jpg', 'rb'),
         caption='🟢 МОСТ работает в режиме симулятор разговора.', reply_markup=ReplyKeyboardRemove())
@@ -39,8 +39,8 @@ async def practice_start(call: CallbackQuery) -> None:
     if MessageText.flag is False and MessageText.score == 0:
         await call.answer(cache_time=5)
         cases = InlineMarkups.create_im(3, ['1', '2', '3'], ['1', '2', '3'])
-        MessageText.generator = SQLRequests.get_practice_questions()
-        MessageText.value = next(MessageText.generator)
+        MessageText.p_generator = SQLRequests.get_practice_questions()
+        MessageText.value = next(MessageText.p_generator)
         MessageText.p_answers = SQLRequests.get_practice_answers(MessageText.value[1])  # type: ignore
         await  call.message.answer(MessageText.value[0], reply_markup=cases) # type: ignore
     else:
@@ -67,7 +67,7 @@ async def practice_reaction(call: CallbackQuery) -> None:
 
 
 async def practice_continue(call: CallbackQuery) -> None:
-    if MessageText.generator is None:
+    if MessageText.p_generator is None:
         await main_menu(call.message)
         return
     try:
@@ -75,7 +75,7 @@ async def practice_continue(call: CallbackQuery) -> None:
         cases = InlineMarkups.create_im(3, ['1', '2', '3'], ['1', '2', '3'])
         if MessageText.flag is True:
             MessageText.flag = False
-            MessageText.value = next(MessageText.generator)
+            MessageText.value = next(MessageText.p_generator)
             MessageText.p_answers = SQLRequests.get_practice_answers(MessageText.value[1])
         else:
             await  call.message.answer('Пожалуйста, выберите один из предложенных вариантов ⬇')
@@ -105,5 +105,5 @@ async def practice_continue(call: CallbackQuery) -> None:
 
 async def do_it_again(call: CallbackQuery) -> None:
     await call.answer(cache_time=5)
-    MessageText.flag, MessageText.score, MessageText.generator, MessageText.value = False, 0, None, None
+    MessageText.flag, MessageText.score, MessageText.p_generator, MessageText.value = False, 0, None, None
     await practice_start(call)
