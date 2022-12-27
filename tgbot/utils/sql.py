@@ -212,9 +212,8 @@ class SQLInserts:
 
     @staticmethod
     def send_feedback(user_id: str = '', datetime: str = '', feedback: str = '') -> None:
-        hash_user_id = HashData.hash_data(user_id)[54:]
         cur.execute('INSERT INTO user_feedback (user_id, feedback_datetime, user_feedback) '
-                    'VALUES(?, ?, ?)', (hash_user_id, datetime, feedback))
+                    'VALUES(?, ?, ?)', (user_id, datetime, feedback))
         db.commit()
 
 

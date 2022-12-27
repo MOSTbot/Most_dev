@@ -4,6 +4,7 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 class FSMFeedback(StatesGroup):
     feedback = State()
     send_feedback = State()
+    send_private_contacts = State()
 
 
 class FSMAddAdmin(StatesGroup):
