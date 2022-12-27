@@ -64,3 +64,4 @@ venv.bak/
 /bot.db
 /sandbox.py
 /.mypy_cache/
+/statistics.txt

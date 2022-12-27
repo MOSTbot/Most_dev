@@ -43,15 +43,22 @@ cur.executescript("""
     pr_id             INTEGER NOT NULL,
     FOREIGN KEY (pr_id) REFERENCES practice_questions (pr_id));
     
-    CREATE TABLE IF NOT EXISTS advice
-    (topic_id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    topic_name        TEXT    NOT NULL,
-    topic_description TEXT    NOT NULL);
+    CREATE TABLE IF NOT EXISTS adv_assertions
+    (adv_id           INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    adv_assertion     TEXT    NOT NULL,
+    adv_description   TEXT    NOT NULL);
+    
+    CREATE TABLE IF NOT EXISTS adv_answers
+    (adv_ans_id       INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    adv_answers       TEXT    NOT NULL,
+    adv_description   TEXT    NOT NULL,
+    adv_id            INTEGER NOT NULL,
+    FOREIGN KEY (adv_id) REFERENCES adv_assertions (adv_id));
     
     CREATE TABLE IF NOT EXISTS main_menu
     (mm_id            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    main_menu_name      TEXT  NOT NULL,
-    description         TEXT);
+    main_menu_name    TEXT    NOT NULL,
+    description       TEXT);
     
     CREATE TABLE IF NOT EXISTS a_assertions
     (a_assertion_id   INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -82,15 +89,15 @@ class SQLDeletions:
 
 class SQLRequests:
     @staticmethod
-    def select_by_table_and_column(table: str, column: str, col_value_is_taken_from: None | str = None,
-                                   value: None | int = None) -> list:
-        if value is None:
-            res = cur.execute(f"SELECT {column} "
-                              f"FROM {table}").fetchall()
-        elif col_value_is_taken_from is not None:
-            res = cur.execute(f"SELECT {column} "
-                              f"FROM {table} "
-                              f"WHERE {col_value_is_taken_from} IS ?", (value,)).fetchall()
+    def select_by_table_and_column(from_: str, select_: str, where_: None | str = None,
+                                   is_: None | int = None) -> list:
+        if is_ is None:
+            res = cur.execute(f"SELECT {select_} "
+                              f"FROM {from_}").fetchall()
+        elif where_ is not None:
+            res = cur.execute(f"SELECT {select_} "
+                              f"FROM {from_} "
+                              f"WHERE {where_} IS ?", (is_,)).fetchall()
         else:
             raise ValueError('col_value_is_taken_from and value must be set')
         return [row[0] for row in res]

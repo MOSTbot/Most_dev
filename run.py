@@ -40,10 +40,10 @@ async def main() -> None:
     try:
         await Disp.disp.start_polling()
     finally:
-        await db.close() # type: ignore
         await Disp.disp.storage.close()
         await Disp.disp.storage.wait_closed()
         await bot.session.close()
+        await db.close() # type: ignore
 
 
 logger = logging.getLogger(__name__)
