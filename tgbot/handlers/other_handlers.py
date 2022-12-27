@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from aiogram import Dispatcher
+from aiogram.dispatcher import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 from tgbot.handlers import main_menu
@@ -13,9 +14,10 @@ def register_other_handlers(dp: Dispatcher) -> None:
     dp.register_callback_query_handler(cb_home, text='main_menu', state=None)
 
 
-async def cb_home(call: CallbackQuery) -> None:
+async def cb_home(call: CallbackQuery, state: FSMContext) -> None:
     await call.answer(cache_time=5)
-    await main_menu(call.message)
+    await state.finish()
+    await main_menu(call.message, state)
 
 
 async def text_wasnt_found(message: Message) -> None:

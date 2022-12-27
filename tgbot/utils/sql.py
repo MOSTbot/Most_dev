@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sqlite3 as sq
-from typing import Generator
+from typing import Any
 
 from tgbot.utils import HashData
 
@@ -33,7 +33,7 @@ cur.executescript("""
     
     CREATE TABLE IF NOT EXISTS practice_questions
     (pr_id            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    question_name       TEXT  NOT NULL);
+    question_name     TEXT    NOT NULL);
     
     CREATE TABLE IF NOT EXISTS practice_answers
     (answer_id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -151,28 +151,6 @@ class SQLRequests:
             return f'<b>Последние 10 отзывов:</b>\n\n{string}'
 
     @staticmethod
-    def get_facts(message_text: None | str) -> Generator[None | str, None, None]:
-        facts = cur.execute('SELECT fact_name '
-                            'FROM assertions '
-                            'LEFT JOIN facts f '
-                            'ON assertions.assertion_id = f.assertion_id '
-                            'WHERE assertion_name IS ?', (message_text,)).fetchall()
-
-        for i in range(len(facts)):
-            yield facts[i][0]
-
-    @staticmethod
-    def get_a_facts(message_text: str) -> Generator[None | str, None, None]:
-        facts = cur.execute('SELECT a_fact_name '
-                            'FROM a_facts '
-                            'LEFT JOIN a_assertions aa '
-                            'ON aa.a_assertion_id = a_facts.a_assertion_id '
-                            'WHERE a_assertion_name IS ?', (message_text,)).fetchall()
-
-        for i in range(len(facts)):
-            yield facts[i][0]
-
-    @staticmethod
     def get_assertions(assertion_name: None | str = None) -> list:
         assertions = cur.execute('SELECT a_assertion_name '
                                  'FROM a_assertions '
@@ -181,13 +159,6 @@ class SQLRequests:
                                  'WHERE assertion_name IS ?', (assertion_name,)).fetchall()
 
         return [assertions[i][0] for i in range(len(assertions))]
-
-    @staticmethod
-    def get_practice_questions() -> Generator[None | tuple, None, None]:
-        practice_questions = cur.execute("SELECT question_name, pr_id "
-                                         "FROM practice_questions").fetchall()
-        for i in range(len(practice_questions)):
-            yield practice_questions[i][0], practice_questions[i][1]
 
     @staticmethod
     def get_practice_answers(p_key: str) -> list:
@@ -245,3 +216,62 @@ class SQLInserts:
         cur.execute('INSERT INTO user_feedback (user_id, feedback_datetime, user_feedback) '
                     'VALUES(?, ?, ?)', (hash_user_id, datetime, feedback))
         db.commit()
+
+
+class GetFacts:
+    def __init__(self, message_text: str) -> None:
+        self.message_text = message_text
+        self.iteration_num = 0
+
+    def __iter__(self) -> GetFacts:
+        return self
+
+    def __next__(self) -> Any:
+        facts = cur.execute('SELECT fact_name '
+                            'FROM assertions '
+                            'LEFT JOIN facts f '
+                            'ON assertions.assertion_id = f.assertion_id '
+                            'WHERE assertion_name IS ?', (self.message_text,)).fetchall()
+        if self.iteration_num < len(facts):
+            res = facts[self.iteration_num][0]
+            self.iteration_num += 1
+            return res
+        raise StopIteration
+
+
+class GetAdFacts:
+    def __init__(self, message_text: str) -> None:
+        self.message_text = message_text
+        self.iteration_num = 0
+
+    def __iter__(self) -> GetAdFacts:
+        return self
+
+    def __next__(self) -> Any:
+        facts = cur.execute('SELECT a_fact_name '
+                            'FROM a_facts '
+                            'LEFT JOIN a_assertions aa '
+                            'ON aa.a_assertion_id = a_facts.a_assertion_id '
+                            'WHERE a_assertion_name IS ?', (self.message_text,)).fetchall()
+        if self.iteration_num < len(facts):
+            res = facts[self.iteration_num][0]
+            self.iteration_num += 1
+            return res
+        raise StopIteration
+
+
+class GetPracticeQuestions:
+    def __init__(self) -> None:
+        self.iteration_num = 0
+
+    def __iter__(self) -> GetPracticeQuestions:
+        return self
+
+    def __next__(self) -> tuple:
+        practice_questions = cur.execute("SELECT question_name, pr_id "
+                                         "FROM practice_questions").fetchall()
+        if self.iteration_num < len(practice_questions):
+            res = practice_questions[self.iteration_num][0], practice_questions[self.iteration_num][1]
+            self.iteration_num += 1
+            return res
+        raise StopIteration

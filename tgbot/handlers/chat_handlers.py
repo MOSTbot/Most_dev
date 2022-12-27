@@ -1,11 +1,12 @@
 from aiogram import Dispatcher
+from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery
 
 from tgbot.handlers import main_menu
 from tgbot.kb import ReplyMarkups, InlineMarkups
-from tgbot.utils import SQLRequests
-from tgbot.utils.util_classes import MessageText, SectionName
+from tgbot.utils import SQLRequests, GetFacts, GetAdFacts
+from tgbot.utils.util_classes import SectionName
 
 
 def register_chat_handlers(dp: Dispatcher) -> None:
@@ -47,64 +48,70 @@ async def chat_mode(message: Message) -> None:
 
 
 # WARNING: Catch exception 'Message text is empty' (Admin has not added any facts yet)
-async def assertions(message: Message) -> None:  # These are callback-buttons!
-    MessageText.message_text = message.text
-    MessageText.c_generator = SQLRequests.get_facts(MessageText.message_text)  # SQL option
-    await  message.reply(next(MessageText.c_generator),
-                         reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы', '👍', '👎',
-                                                                  'Оставить отзыв', 'Главное меню'],
-                                                              ['more_arguments', 'thematic_questions', 'like_btn',
-                                                               'dislike_btn', 'feedback',
-                                                               'main_menu']))
+async def assertions(message: Message, state: FSMContext) -> None:  # These are callback-buttons!
+    async with state.proxy() as data:
+        data['message_text'], data['c_generator']  = message.text, GetFacts(message.text)
+        await  message.answer(next(data['c_generator']),
+                             reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы', '👍', '👎',
+                                                                      'Оставить отзыв', 'Главное меню'],
+                                                                  ['more_arguments', 'thematic_questions', 'like_btn',
+                                                                   'dislike_btn', 'feedback',
+                                                                   'main_menu']))
 
 
-async def cb_more_args(call: CallbackQuery) -> None:
+async def cb_more_args(call: CallbackQuery, state: FSMContext) -> None:
     try:
         await call.answer(cache_time=5)
         try:
-            await call.message.answer(next(MessageText.c_generator),
-                                      reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы',
-                                                                               '👍', '👎',
-                                                                               'Оставить отзыв', 'Главное меню'],
-                                                                           ['more_arguments', 'thematic_questions',
-                                                                            'some callback', 'some callback',
-                                                                            'feedback', 'main_menu']))
+            async with state.proxy() as data:
+                await call.message.answer(next(data['c_generator']),
+                                          reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы',
+                                                                                   '👍', '👎',
+                                                                                   'Оставить отзыв', 'Главное меню'],
+                                                                               ['more_arguments', 'thematic_questions',
+                                                                                'some callback', 'some callback',
+                                                                                'feedback', 'main_menu']))
         except TypeError:
-            await main_menu(call.message)
+            await state.finish()
+            await main_menu(call.message, state)
 
     except StopIteration:
-        if MessageText.message_text in SQLRequests.select_by_table_and_column('assertions', 'assertion_name'):
+        if data['message_text'] in SQLRequests.select_by_table_and_column('assertions', 'assertion_name'):
             await  call.message.answer('Хотите посмотреть дополнительные вопросы по теме?',
                                        reply_markup=InlineMarkups.
-                                       create_im(2, ['Другие вопросы по теме', 'Главное меню'],
-                                                 ['thematic_questions',
-                                                  'main_menu']))
-        elif MessageText.message_text in SQLRequests.select_by_table_and_column('a_assertions', 'a_assertion_name'):
+                                       create_im(2, ['Еще вопросы по теме', 'Главное меню'],
+                                                 ['thematic_questions', 'main_menu']))
+        elif data['message_text'] in SQLRequests.select_by_table_and_column('a_assertions', 'a_assertion_name'):
             other_questions = ReplyMarkups.create_rm(2, True, *SQLRequests.rnd_questions())
             await call.message.answer('Вы можете выбрать другие вопросы из меню ниже:', reply_markup=other_questions)
 
 
-async def thematic_questions(call: CallbackQuery) -> None:
+async def thematic_questions(call: CallbackQuery, state: FSMContext) -> None:
     await call.answer(cache_time=5)
-    await call.message.answer('Дополнительные вопросы, касающиеся данной темы ⬇',
-                              reply_markup=ReplyMarkups.create_rm(2, True, *SQLRequests.get_assertions(
-                                  MessageText.message_text)))
+    async with state.proxy() as data:
+        if get_assertions := SQLRequests.get_assertions(data['message_text']):  # if get_assertions != []
+            await call.message.answer('Дополнительные вопросы, касающиеся данной темы ⬇',
+                                      reply_markup=ReplyMarkups.create_rm(2, True, *get_assertions))
+        else:
+            await call.message.answer('Дополнительные вопросы, касающиеся данной темы ⬇',
+                                      reply_markup=ReplyMarkups.create_rm(2, True, *SQLRequests.rnd_questions()))
 
 
-async def a_questions(message: Message) -> None:  # These are callback-buttons!
-    MessageText.message_text = message.text
-    MessageText.c_generator = SQLRequests.get_a_facts(MessageText.message_text)
-    try:
-        await  message.reply(next(MessageText.c_generator),
-                             reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Другие вопросы', '👍', '👎',
-                                                                      'Оставить отзыв', 'Главное меню'],
-                                                                  ['more_arguments', 'random_questions',
-                                                                   'some callback',
-                                                                   'some callback', 'feedback',
-                                                                   'main_menu']))  # WARNING: Dynamic arguments can't be recognized!
-    except StopIteration:
-        await message.answer('Раздел находится в разработке', reply_markup=InlineMarkups.create_im(1, ['Главное меню'],
-                                                                                                   ['main_menu']))
+async def a_questions(message: Message, state: FSMContext) -> None:  # These are callback-buttons!
+    async with state.proxy() as data:
+        data['message_text'], data['c_generator'] = message.text, GetAdFacts(message.text)
+        try:
+            await  message.answer(next(data['c_generator']),
+                                 reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы', '👍', '👎',
+                                                                          'Оставить отзыв', 'Главное меню'],
+                                                                      ['more_arguments', 'random_questions',
+                                                                       'some callback',
+                                                                       'some callback', 'feedback',
+                                                                       'main_menu']))  # WARNING: Dynamic arguments can't be recognized!
+        except StopIteration:
+            await message.answer('Раздел находится в разработке',
+                                 reply_markup=InlineMarkups.create_im(1, ['Главное меню'],
+                                                                      ['main_menu']))
 
 
 async def random_questions(call: CallbackQuery) -> None:

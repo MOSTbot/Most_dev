@@ -1,16 +1,17 @@
 from aiogram import Dispatcher
+from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message
 
 from tgbot.kb import InlineMarkups, ReplyMarkups
 from tgbot.utils import SQLRequests
-from tgbot.utils.util_classes import MessageText, SectionName
+from tgbot.utils.util_classes import SectionName
 
 
 def register_main_menu_handlers(dp: Dispatcher) -> None:
-    dp.register_message_handler(start, commands=["start"], state=None)
-    dp.register_message_handler(main_menu, commands=["menu"], state=None)
-    dp.register_message_handler(main_menu, Text(contains='Главное меню', ignore_case=True), state=None)
+    dp.register_message_handler(start, commands=["start"], state="*")
+    dp.register_message_handler(main_menu, commands=["menu"], state="*")
+    dp.register_message_handler(main_menu, Text(contains='Главное меню', ignore_case=True), state="*")
 
 
 async def start(message: Message) -> None:
@@ -32,8 +33,9 @@ async def start(message: Message) -> None:
                          reply_markup=InlineMarkups.create_im(1, ['Перейти в главное меню'], ['main_menu']))
 
 
-async def main_menu(message: Message) -> None:
-    MessageText.flag = False
+async def main_menu(message: Message, state: FSMContext) -> None:
+    SectionName.s_name = 'Главное меню'  # for logging purposes
+    await state.update_data(flag=False)
     await message.answer_photo(
         photo=open('tgbot/assets/menu.jpg', 'rb'),
         caption='Какое направление вы хотите запустить?',
