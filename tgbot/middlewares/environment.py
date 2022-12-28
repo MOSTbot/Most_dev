@@ -25,7 +25,7 @@ from tgbot.utils import SectionName, HashData, SQLRequests
 # reply_list = [*SQLRequests.select_by_table_and_column('assertions', 'assertion_name'),
 #               *SQLRequests.select_by_table_and_column('a_assertions', 'a_assertion_name'),
 #               *SQLRequests.select_by_table_and_column('main_menu', 'main_menu_name'), 'Отмена',
-#               '/start', '/menu', '/chat', '/practice', '/advice', '/theory', '/feedback', 'Оставить отзыв']
+#               '/start', '/menu', '/chat', '/practice', '/advice', '/theory', '/feedback', /privacy, 'Оставить отзыв']
 
 
 # class AdminsMiddleware(BaseMiddleware):

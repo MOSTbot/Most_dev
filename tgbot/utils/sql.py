@@ -71,7 +71,12 @@ cur.executescript("""
     a_fact_name       TEXT    NOT NULL,
     a_ext_source      TEXT    NOT NULL,
     a_assertion_id    INTEGER NOT NULL,
-    FOREIGN KEY (a_assertion_id) REFERENCES a_assertions (a_assertion_id));""")
+    FOREIGN KEY (a_assertion_id) REFERENCES a_assertions (a_assertion_id));
+    
+    CREATE TABLE IF NOT EXISTS data_privacy
+    (dp_id            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    dp_question       TEXT    NOT NULL,
+    dp_answer         TEXT);""")
 
 
 class SQLDeletions:
