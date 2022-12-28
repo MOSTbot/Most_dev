@@ -39,7 +39,7 @@ cur.executescript("""
     (answer_id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     answer_num        TEXT    NOT NULL,
     commentary        TEXT    NOT NULL,
-    quality           INTEGER NOT NULL,
+    score             INTEGER NOT NULL,
     pr_id             INTEGER NOT NULL,
     FOREIGN KEY (pr_id) REFERENCES practice_questions (pr_id));
     
@@ -162,7 +162,7 @@ class SQLRequests:
 
     @staticmethod
     def get_practice_answers(p_key: str) -> list:
-        return cur.execute('SELECT commentary, quality '
+        return cur.execute('SELECT commentary, score '
                            'FROM practice_answers '
                            'LEFT JOIN practice_questions pq '
                            'ON pq.pr_id = practice_answers.pr_id '
