@@ -16,10 +16,6 @@ bot = Bot(token=config.tg_bot.token, parse_mode='HTML')
 Disp.disp = Dispatcher(bot, storage=storage)
 
 
-def update_dispatcher() -> None:
-    Disp.disp = Dispatcher(bot, storage=storage)
-
-
 async def main() -> None:
     # logging.basicConfig(
     #     level=logging.INFO,
@@ -43,7 +39,7 @@ async def main() -> None:
         await Disp.disp.storage.close()
         await Disp.disp.storage.wait_closed()
         await bot.session.close()
-        await db.close() # type: ignore
+        db.close()  # type: ignore
 
 
 logger = logging.getLogger(__name__)

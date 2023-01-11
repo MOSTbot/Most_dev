@@ -16,11 +16,3 @@ class FSMAddAdmin(StatesGroup):
 class FSMDeleteAdmin(StatesGroup):
     delete_admin_id = State()
     confirm = State()
-
-
-class FSMAddAssertion(StatesGroup):
-    initialize = State()
-    add_assertion = State()
-    facts_init = State()
-    add_facts = State()
-    confirm = State()

@@ -65,3 +65,7 @@ venv.bak/
 /sandbox.py
 /.mypy_cache/
 /statistics.txt
+/token.pickle
+/key.pickle
+/key.json
+/credentials.json

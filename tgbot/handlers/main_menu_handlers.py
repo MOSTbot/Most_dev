@@ -16,9 +16,9 @@ def register_main_menu_handlers(dp: Dispatcher) -> None:
     dp.register_message_handler(main_menu, Text(contains='Главное меню', ignore_case=True), state="*")
     dp.register_message_handler(data_privacy, commands=["privacy"], state="*")
     dp.register_callback_query_handler(data_privacy, text='data_privacy', state="*")
-    dp.register_message_handler(data_privacy_answers, Text(equals=SQLRequests
-                                                           .select_by_table_and_column('data_privacy', 'dp_question'),
-                                                           ignore_case=True), state="*")
+    dp.register_message_handler(data_privacy_answers, lambda message: message.text in SQLRequests
+                                .select_by_table_and_column('data_privacy', 'dp_question'),
+                                state="*")
 
 
 async def start(message: Message) -> None:

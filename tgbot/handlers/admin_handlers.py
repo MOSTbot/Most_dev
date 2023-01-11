@@ -4,12 +4,14 @@ from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message, CallbackQuery
 
+from tgbot.api import GoogleSheetsAPI
+
 from tgbot.kb import ReplyMarkups, InlineMarkups
-from tgbot.utils import FSMAddAdmin, FSMDeleteAdmin, FSMAddAssertion, SQLInserts, SQLRequests, SQLDeletions
+from tgbot.utils import FSMAddAdmin, FSMDeleteAdmin, SQLInserts, SQLRequests, SQLDeletions
 
 
 def register_admin_handlers(dp: Dispatcher) -> None:
-    dp.register_callback_query_handler(update_disp, text='update_dispatcher', state='*', is_su=True)
+    dp.register_callback_query_handler(get_data_from_gs, text='get_data_from_gs', state='*', is_su=True)
     dp.register_message_handler(admin_start, commands=["start"], state=None, is_su=True)
     # ------------------- PROMOTE TO ADMIN -------------------
     dp.register_callback_query_handler(add_new_admin, text='admin_promote_ib', state='*', is_su=True)
@@ -24,12 +26,6 @@ def register_admin_handlers(dp: Dispatcher) -> None:
     dp.register_callback_query_handler(select_admins, text='admins_list_ib', state='*', is_su=True)
     # ------------------- LAST 10 FEEDBACKS ------------------
     dp.register_callback_query_handler(last_10_feedbacks, text='last_10_feedbacks_ib', state='*', is_su=True)
-    # --------------------- ADD ASSERTION --------------------
-    dp.register_callback_query_handler(assertion_init, text='add_section_ib', state='*', is_su=True)
-    dp.register_message_handler(check_assertion, state=FSMAddAssertion.initialize, is_su=True)
-    dp.register_message_handler(add__assertion, state=FSMAddAssertion.add_assertion, is_su=True)
-    dp.register_message_handler(facts_init, state=FSMAddAssertion.facts_init, is_su=True)
-    dp.register_message_handler(add__facts, state=FSMAddAssertion.add_facts, is_su=True)
 
 
 async def admin_start(message: Message) -> None:
@@ -54,21 +50,25 @@ async def admin_start(message: Message) -> None:
                                                                   'Список Администраторов',
                                                                   'Последние 10 отзывов',
                                                                   'Добавить раздел',
-                                                                  'Обновить данные'],
+                                                                  'Обновить данные из API'],
                                                               ['admin_promote_ib',
                                                                'admin_remove_ib',
                                                                'admins_list_ib',
                                                                'last_10_feedbacks_ib',
                                                                'add_section_ib',
-                                                               'update_dispatcher']))
+                                                               'get_data_from_gs']))
 
 
-# ------------------ UPDATE DYNAMIC DATA -----------------
-async def update_disp(call: CallbackQuery) -> None:
+# ------------------- GET DATA FROM API ------------------
+async def get_data_from_gs(call: CallbackQuery) -> None:
     await call.answer(cache_time=10)
-    from run import update_dispatcher
-    update_dispatcher()
-    await call.message.answer('Данные были успешно обновлены')
+    rng = 'B2:E'
+    shts = ['assertions', 'facts',
+            'a_assertions', 'a_facts',
+            'main_menu', 'data_privacy',
+            'practice_questions', 'practice_answers',
+            'adv_assertions', 'adv_answers']
+    await GoogleSheetsAPI.get_data(rng, shts, call)
 
 
 # ------------------- PROMOTE TO ADMIN -------------------
@@ -167,69 +167,3 @@ async def select_admins(call: CallbackQuery) -> None:
 async def last_10_feedbacks(call: CallbackQuery) -> None:
     await call.answer(cache_time=10)
     await call.message.answer(SQLRequests.last10_fb())
-
-
-# --------------------- ADD ASSERTION --------------------
-async def assertion_init(call: CallbackQuery) -> None:
-    await call.answer(cache_time=10)
-    await call.message.answer('Выберете существующее утверждение или напишите новое',
-                              reply_markup=ReplyMarkups
-                              .create_rm(3, True,
-                                         *SQLRequests.select_by_table_and_column('assertions', 'assertion_name')))
-    await FSMAddAssertion.initialize.set()
-
-
-async def check_assertion(message: Message, state: FSMContext) -> None:  # state: initialize
-    assertion = SQLRequests.check_if_item_exists(table='assertions', column='assertion_name', value=message.text)
-    async with state.proxy() as data:
-        data['assertion'] = message.text
-    if assertion is False:
-        await message.answer('Этого аргумента нет в базе данных. Добавить?',
-                             reply_markup=ReplyMarkups.create_rm(2, True, 'Добавить', 'Отмена'))
-        return await FSMAddAssertion.add_assertion.set()  # state: add_assertion
-    await message.answer('Напишите контрагрументы к этому утверждению, по одному за раз:',
-                         reply_markup=ReplyMarkups.create_rm(1, True, 'Отмена'))
-    await FSMAddAssertion.facts_init.set()  # If the argument is in the database, switch to adding facts to this argument
-
-
-async def add__assertion(message: Message, state: FSMContext) -> None:  # state: add_assertion
-    if message.text == 'Добавить':
-        await message.delete()
-        async with state.proxy() as data:
-            await SQLInserts.add_to_table(table='assertions', column='assertion_name', value=data['assertion'])
-            await message.answer('Аргумент был добавлен в базу данных')
-            await message.answer('Напишите контрагрументы по одному за раз и нажмите Enter')
-            await FSMAddAssertion.facts_init.set()
-    else:
-        await message.answer('Действие отменено')
-        await state.finish()
-
-
-async def facts_init(message: Message, state: FSMContext) -> None:  # state: facts_init
-    if message.text == 'Отмена':
-        await message.delete()
-        await message.answer('Действие отменено')
-        return await state.finish()
-    async with state.proxy() as data:
-        data['fact'] = message.text
-    await message.answer(f'Подтвердите добавление контраргумента в базу данных:\n\n{message.text}',
-                         reply_markup=ReplyMarkups.create_rm(2, True, 'Добавить', 'Отмена'))
-
-    await FSMAddAssertion.add_facts.set()
-
-
-async def add__facts(message: Message, state: FSMContext) -> None:  # state: add_facts
-    # TODO: Should be a check if the fact exists in the database
-    if message.text == 'Добавить':
-        async with state.proxy() as data:
-            await SQLInserts.add_to_child_table(parent_table='assertions', parent_table_pk_column='assertion_id',
-                                                parent_table_column='assertion_name',
-                                                parent_table_value=data['assertion'],
-                                                child_table='facts', child_table_column='fact_name',
-                                                child_table_value=data['fact'])
-            await message.answer('Факт был добавлен в базу данных.\n\nДобавьте следующий контрагргумент'
-                                 ' или нажмите "Отмена"', reply_markup=ReplyMarkups.create_rm(2, True, 'Отмена'))
-            await FSMAddAssertion.facts_init.set()
-    else:
-        await message.answer('Действие отменено')
-        await state.finish()

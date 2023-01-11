@@ -12,12 +12,10 @@ from tgbot.utils.util_classes import SectionName
 def register_chat_handlers(dp: Dispatcher) -> None:
     dp.register_message_handler(chat_mode, commands=["chat"], state=None)
     dp.register_message_handler(chat_mode, Text(equals='💬 Режим диалога', ignore_case=True), state=None)
-    dp.register_message_handler(assertions, Text(equals=SQLRequests
-                                                 .select_by_table_and_column('assertions', 'assertion_name'),
-                                                 ignore_case=True), state=None)
-    dp.register_message_handler(a_questions, Text(equals=SQLRequests
-                                                  .select_by_table_and_column('a_assertions', 'a_assertion_name'),
-                                                  ignore_case=True), state=None)
+    dp.register_message_handler(assertions, lambda message: message.text in SQLRequests
+                                .select_by_table_and_column('assertions', 'assertion_name'), state=None)
+    dp.register_message_handler(a_questions, lambda message: message.text in SQLRequests
+                                .select_by_table_and_column('a_assertions', 'a_assertion_name'), state=None)
     dp.register_callback_query_handler(thematic_questions, text='thematic_questions', state=None)
     dp.register_callback_query_handler(cb_more_args, text='more_arguments', state=None)
     dp.register_callback_query_handler(random_questions, text=['random_questions'], state=None)

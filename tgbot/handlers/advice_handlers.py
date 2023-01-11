@@ -13,11 +13,11 @@ def register_advice_handlers(dp: Dispatcher) -> None:
     dp.register_message_handler(advice_mode, commands=["advice"], state=None)
     dp.register_message_handler(advice_mode, Text(equals='🧠 Психология разговора', ignore_case=True), state=None)
     dp.register_callback_query_handler(advice_mode2,
-                                       Text(equals=SQLRequests
-                                            .select_by_table_and_column('adv_assertions', 'topic_name')), state=None)
+                                       lambda call: call.data in SQLRequests
+                                       .select_by_table_and_column('adv_assertions', 'topic_name'), state=None)
     dp.register_message_handler(advice_mode3,
-                                Text(equals=SQLRequests.select_by_table_and_column('adv_answers', 'adv_answers')),
-                                state=None)
+                                lambda message: message.text in SQLRequests
+                                .select_by_table_and_column('adv_answers', 'adv_answers'), state=None)
 
 
 async def advice_mode(message: Message | CallbackQuery) -> None:

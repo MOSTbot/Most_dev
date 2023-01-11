@@ -14,7 +14,7 @@ from tgbot.utils.util_classes import SectionName
 def register_practice_handlers(dp: Dispatcher) -> None:
     dp.register_message_handler(practice_mode, commands=["practice"], state="*")
     dp.register_message_handler(practice_mode,
-                                Text(equals=['🏋️‍ Симулятор разговора', 'Сыграть еще раз!'], ignore_case=True),
+                                Text(equals=['🏋 Симулятор разговора', 'Сыграть еще раз!'], ignore_case=True),
                                 state="*")
     dp.register_callback_query_handler(practice_start, text='lets_go', state="*")
     dp.register_callback_query_handler(practice_reaction, text=['1', '2', '3'], state="*")
