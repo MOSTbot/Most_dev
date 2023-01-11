@@ -84,10 +84,12 @@ async def practice_continue(call: CallbackQuery, state: FSMContext) -> None:
             cases = InlineMarkups.create_im(3, ['1', '2', '3'], ['1', '2', '3'])
 
             try:
-                if data['flag'] is True:
+                if data['flag'] is True and 'value' in data.keys():
                     data['flag'] = False
                     data['value'] = next(data['p_generator'])
                     data['p_answers'] = SQLRequests.get_practice_answers(data['value'][1])
+                elif 'value' not in data.keys():
+                    return await main_menu(call.message, state)
                 else:
                     await  call.message.answer('Пожалуйста, выберите один из предложенных вариантов ⬇')
             except KeyError:
