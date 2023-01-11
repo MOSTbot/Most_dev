@@ -69,7 +69,7 @@ async def cb_more_args(call: CallbackQuery, state: FSMContext) -> None:
                                                                                ['more_arguments', 'thematic_questions',
                                                                                 'some callback', 'some callback',
                                                                                 'feedback', 'main_menu']))
-        except TypeError:
+        except (TypeError, KeyError):
             await state.finish()
             await main_menu(call.message, state)
 

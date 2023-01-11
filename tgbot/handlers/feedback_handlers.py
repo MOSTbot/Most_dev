@@ -11,6 +11,7 @@ from tgbot.utils import FSMFeedback, SQLRequests, SQLInserts, SectionName, HashD
 commands_list = ['/start', '/menu', '/chat', '/practice', '/advice', '/theory', '/feedback', '/privacy',
                  '🤓 Оставить отзыв', 'Отмена']
 
+
 def register_feedback_handlers(dp: Dispatcher) -> None:
     dp.register_message_handler(fsm_feedback, Text(contains='отзыв', ignore_case=True), state=None)
     dp.register_message_handler(fsm_feedback, commands=['feedback'], state=None)
@@ -54,6 +55,7 @@ async def fsm_send_feedback(message: Message, state: FSMContext) -> None:  # TOD
                              'или связаться с нашей командой — напишите нам еще одно сообщение ниже ⬇\n\n'
                              'В этом сообщении мы сможем увидеть ваш <b>telegram ID</b>, чтобы написать вам напрямую. '
                              'Для конфиденциальности ваше сообщение будет сразу <b>удалено из чата</b>.\n\n'
+                             'Если ничего не хотите писать - просто нажмите кнопку "Главное меню"\n\n'
                              'С уважением, команда «МОСТ».', reply_markup=ReplyMarkups
                              .create_rm(2, True, 'Главное меню'))
         async with state.proxy() as data:
@@ -72,7 +74,7 @@ async def fsm_private_contacts(message: Message, state: FSMContext) -> Message |
     if message.text == 'Главное меню':
         from tgbot.handlers import main_menu
         await state.finish()
-        return await main_menu(message, state)
+        return await main_menu(message, state)  # type: ignore
 
     elif message.text in commands_list:
         await state.finish()
