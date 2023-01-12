@@ -61,7 +61,7 @@ venv.bak/
 .pyre/
 .idea/*
 .env
-/bot.db
+/tgbot/db/bot.db
 /sandbox.py
 /.mypy_cache/
 /statistics.txt

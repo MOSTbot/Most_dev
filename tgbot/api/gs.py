@@ -97,8 +97,10 @@ class GoogleSheetsAPI:
                                       DELETE FROM sqlite_sequence WHERE name = '{table_name}';""")
 
             except Exception as e:
-                await call.message.answer('Таблицы не существует!')
-                raise ValueError('Таблицы не существует!') from e
+                await call.message.answer(f'Таблиц(ы) не существует!\n'
+                                          f'Проверьте наличие или название таблицы: <b>{table_name}</b>\n\n'
+                                          f'Данные не были изменены')
+                raise ValueError(f'Таблицы не существует! Таблица: {table_name}') from e
 
             values = [res['valueRanges'][tables]['values'][_] for _ in range(num_of_rows)]
 
@@ -108,8 +110,11 @@ class GoogleSheetsAPI:
             try:
                 cur.execute(f'SELECT {cols} FROM {table_name}').fetchone()
             except Exception as e:
-                await call.message.answer('Столбца не существует!')
-                raise ValueError('Столбца не существует!') from e
+                await call.message.answer(f'Столбца(ов) не существует!\n'
+                                          f'Таблица: <b>{table_name}</b>,\n'
+                                          f'Проверьте названия столбцов: <b>{cols}</b>\n\n'
+                                          f'Данные не были изменены')
+                raise ValueError(f'Столбца не существует! Таблица: {table_name}, столбцы: {cols}') from e
 
             for i in range(1, len(values)):
 

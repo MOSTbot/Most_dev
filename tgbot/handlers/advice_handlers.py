@@ -14,7 +14,7 @@ def register_advice_handlers(dp: Dispatcher) -> None:
     dp.register_message_handler(advice_mode, Text(equals='🧠 Психология разговора', ignore_case=True), state=None)
     dp.register_callback_query_handler(advice_mode2,
                                        lambda call: call.data in SQLRequests
-                                       .select_by_table_and_column('adv_assertions', 'topic_name'), state=None)
+                                       .select_by_table_and_column('adv_assertions', 'adv_assertion'), state=None)
     dp.register_message_handler(advice_mode3,
                                 lambda message: message.text in SQLRequests
                                 .select_by_table_and_column('adv_answers', 'adv_answers'), state=None)
@@ -40,15 +40,15 @@ async def advice_mode(message: Message | CallbackQuery) -> None:
                           'Выберите тему, чтобы прочитать ⬇',
                           reply_markup=InlineMarkups
                           .create_im(1, [*SQLRequests.
-                                     select_by_table_and_column('adv_assertions', 'topic_name'), 'Главное меню'],
+                                     select_by_table_and_column('adv_assertions', 'adv_assertion'), 'Главное меню'],
                                      [*SQLRequests.
-                                     select_by_table_and_column('adv_assertions', 'topic_name'), 'main_menu']))
+                                     select_by_table_and_column('adv_assertions', 'adv_assertion'), 'main_menu']))
     await message.delete()
 
 
 async def advice_mode2(call: CallbackQuery) -> None:
-    adv_id = SQLRequests.select_by_table_and_column('adv_assertions', 'adv_id', 'topic_name', call.data)
-    section_description = SQLRequests.select_by_table_and_column('adv_assertions', 'adv_description', 'topic_name', call.data)
+    adv_id = SQLRequests.select_by_table_and_column('adv_assertions', 'adv_id', 'adv_assertion', call.data)
+    section_description = SQLRequests.select_by_table_and_column('adv_assertions', 'adv_description', 'adv_assertion', call.data)
     await call.answer(cache_time=10)
     await call.message.answer(*section_description, reply_markup=ReplyMarkups.create_rm(2, False,
                                             *SQLRequests.select_by_table_and_column('adv_answers', 'adv_answers', 'adv_id', *adv_id)))

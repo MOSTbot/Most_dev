@@ -49,13 +49,11 @@ async def admin_start(message: Message) -> None:
                                                                   'Удалить Администратора',
                                                                   'Список Администраторов',
                                                                   'Последние 10 отзывов',
-                                                                  'Добавить раздел',
                                                                   'Обновить данные из API'],
                                                               ['admin_promote_ib',
                                                                'admin_remove_ib',
                                                                'admins_list_ib',
                                                                'last_10_feedbacks_ib',
-                                                               'add_section_ib',
                                                                'get_data_from_gs']))
 
 
