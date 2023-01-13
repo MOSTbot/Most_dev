@@ -13,6 +13,14 @@ CREATE TABLE IF NOT EXISTS user_feedback
     user_feedback     TEXT    NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS user_feedback_private
+(
+    fb_id             INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    user_id           TEXT    NOT NULL,
+    feedback_datetime TEXT    NOT NULL,
+    user_feedback     TEXT    NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS assertions
 (
     assertion_id   INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,

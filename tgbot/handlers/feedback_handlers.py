@@ -86,7 +86,7 @@ async def fsm_private_contacts(message: Message, state: FSMContext) -> Message |
                                                .select_by_table_and_column('main_menu', 'main_menu_name')))
 
     datetime = str(message.date)
-    SQLInserts.send_feedback(user_id=message.from_user.id, datetime=datetime, feedback=message.text)
+    SQLInserts.send_feedback_private(user_id=message.from_user.id, datetime=datetime, feedback=message.text)
     await message.delete()
     await message.answer('Ваши контакты успешно отправлены, спасибо вам еще раз! ☺', reply_markup=ReplyMarkups
                          .create_rm(2, True, *SQLRequests

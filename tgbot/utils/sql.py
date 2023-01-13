@@ -128,23 +128,6 @@ class SQLRequests:
 
 
 class SQLInserts:
-    @staticmethod
-    async def add_to_table(table: str, column: str, value: str) -> None:
-        cur.execute(f"INSERT INTO {table} ({column}) "
-                    f"VALUES(?)", (value,))
-        db.commit()
-
-    @staticmethod
-    async def add_to_child_table(parent_table: str, parent_table_pk_column: str, parent_table_column: str,
-                                 parent_table_value: str,
-                                 child_table: str, child_table_column: str, child_table_value: str) -> None:
-        cur.execute(
-            f"INSERT INTO {child_table} ({child_table_column}, {parent_table_pk_column})"
-            f" VALUES (?, ?)",
-            (child_table_value, cur.execute(f"SELECT {parent_table_pk_column}"
-                                            f" FROM {parent_table}"
-                                            f" WHERE {parent_table_column} IS ?", (parent_table_value,)).fetchone()[0]))
-        db.commit()
 
     @staticmethod
     async def create_admin(admin_id: str | int, admin_name: None | str = None) -> bool:
@@ -156,9 +139,16 @@ class SQLInserts:
         db.commit()
         return True
 
+    # TODO: merge two methods below into one
     @staticmethod
     def send_feedback(user_id: str = '', datetime: str = '', feedback: str = '') -> None:
         cur.execute('INSERT INTO user_feedback (user_id, feedback_datetime, user_feedback) '
+                    'VALUES(?, ?, ?)', (user_id, datetime, feedback))
+        db.commit()
+
+    @staticmethod
+    def send_feedback_private(user_id: str = '', datetime: str = '', feedback: str = '') -> None:
+        cur.execute('INSERT INTO user_feedback_private (user_id, feedback_datetime, user_feedback) '
                     'VALUES(?, ?, ?)', (user_id, datetime, feedback))
         db.commit()
 
