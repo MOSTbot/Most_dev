@@ -73,7 +73,9 @@ async def fsm_send_feedback(message: Message, state: FSMContext) -> None:  # TOD
 async def fsm_private_contacts(message: Message, state: FSMContext) -> Message | None:
     if message.text == 'Главное меню':
         from tgbot.handlers import main_menu
-        await state.finish()
+        current_state = await state.get_state()
+        if current_state is not None:
+            await state.finish()
         return await main_menu(message, state)  # type: ignore
 
     elif message.text in commands_list:

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
-from aiogram.types import Message, CallbackQuery
+from aiogram.dispatcher.filters import Text
+from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 
 from tgbot.api import GoogleSheetsAPI
 
@@ -11,8 +12,13 @@ from tgbot.utils import FSMAddAdmin, FSMDeleteAdmin, SQLInserts, SQLRequests, SQ
 
 
 def register_admin_handlers(dp: Dispatcher) -> None:
+    dp.register_message_handler(su_start, commands=["admin"], state=None, is_su=True)
+    dp.register_message_handler(admin_start, commands=["admin"], state=None, is_admin=True)
+    # ------------------- GET DATA FROM API ------------------
     dp.register_callback_query_handler(get_data_from_gs, text='get_data_from_gs', state='*', is_su=True)
-    dp.register_message_handler(admin_start, commands=["start"], state=None, is_su=True)
+    dp.register_callback_query_handler(get_data_from_gs, text='get_data_from_gs', state='*', is_admin=True)
+    # --------------------- CANCEL BUTTON --------------------
+    dp.register_message_handler(cancel_btn, Text(equals='Отмена'), state='*', is_su=True)
     # ------------------- PROMOTE TO ADMIN -------------------
     dp.register_callback_query_handler(add_new_admin, text='admin_promote_ib', state='*', is_su=True)
     dp.register_message_handler(new_admin_id, state=FSMAddAdmin.add_admin_id, is_su=True)
@@ -26,25 +32,11 @@ def register_admin_handlers(dp: Dispatcher) -> None:
     dp.register_callback_query_handler(select_admins, text='admins_list_ib', state='*', is_su=True)
     # ------------------- LAST 10 FEEDBACKS ------------------
     dp.register_callback_query_handler(last_10_feedbacks, text='last_10_feedbacks_ib', state='*', is_su=True)
+    dp.register_callback_query_handler(last_10_feedbacks, text='last_10_feedbacks_ib', state='*', is_admin=True)
 
 
-async def admin_start(message: Message) -> None:
-    await message.answer_photo(photo=open('tgbot/assets/start.jpg', 'rb'))
-    await message.answer('<b>Мы ответственны за тех, кого приручила пропаганда</b>.\n'
-                         'Особенно за родных, любимых и друзей.\n\n'
-                         'Разве не достаточно просто сказать правду?\n'
-                         'Увы, многие сталкивались с тем, что '
-                         '<b>правду не слышат или не хотят слышать</b>. Но это не повод сдаваться.\n\n'
-                         'МОСТ — cовместный проект <a href="https://relocation.guide/">гайда в свободный мир</a> и XZ foundation. '
-                         'Это сценарии разговоров с близкими о войне.\n\n'
-                         'Их разработали волонтеры гайда <b>с опытом переубеждения</b> близких, а '
-                         '<b>психологи, социологи и журналисты</b> добавили научную базу.\n\n'
-                         'Разговор о войне не будет простым и быстрым.\n\n'
-                         'Мы верим, что <b>экспертный подход, общественный вклад и эмпатия</b> помогут «вернуть связь» '
-                         'с близкими и создать продукт, который основан на способности слышать, '
-                         'мыслить и противостоять ложным мнениям.',
-                         reply_markup=InlineMarkups.create_im(1, ['Перейти в главное меню'], ['main_menu']))
-    await message.answer("Вы являетесь Администратором бота",
+async def su_start(message: Message) -> None:
+    await message.answer("Вы являетесь Глобальным Администратором бота",
                          reply_markup=InlineMarkups.create_im(2, ['Добавить Администратора',
                                                                   'Удалить Администратора',
                                                                   'Список Администраторов',
@@ -54,6 +46,14 @@ async def admin_start(message: Message) -> None:
                                                                'admin_remove_ib',
                                                                'admins_list_ib',
                                                                'last_10_feedbacks_ib',
+                                                               'get_data_from_gs']))
+
+
+async def admin_start(message: Message) -> None:
+    await message.answer("Вы являетесь Администратором бота",
+                         reply_markup=InlineMarkups.create_im(2, ['Последние 10 отзывов',
+                                                                  'Обновить данные из API'],
+                                                              ['last_10_feedbacks_ib',
                                                                'get_data_from_gs']))
 
 
@@ -72,43 +72,51 @@ async def get_data_from_gs(call: CallbackQuery) -> None:
 # ------------------- PROMOTE TO ADMIN -------------------
 async def add_new_admin(call: CallbackQuery) -> None:
     await call.answer(cache_time=10)
-    await call.message.answer('Укажите ID добавляемого Администратора:')
+    await call.message.answer('Укажите ID добавляемого Администратора:',
+                              reply_markup=ReplyMarkups.create_rm(1, True, 'Отмена'))
     await FSMAddAdmin.add_admin_id.set()
 
 
 async def new_admin_id(message: Message, state: FSMContext) -> None:  # state: add_admin_id
+    await message.delete()
     if message.text.isdigit() and 5 <= len(message.text) <= 10:
         async with state.proxy() as data:
             data['admin_id'] = message.text
-            await message.answer('Укажите имя добавляемого Администратора:')
+            await message.answer('Укажите имя добавляемого Администратора:',
+                                 reply_markup=ReplyMarkups.create_rm(1, True, 'Отмена'))
             await FSMAddAdmin.next()
     else:
-        await message.answer('ID Администратора должно быть целым числом, не менее 5 и не более 10 знаков!')
+        await message.answer('ID Администратора должно быть целым числом, не менее 5 и не более 10 знаков!',
+                             reply_markup=ReplyMarkups.create_rm(1, True, 'Отмена'))
 
 
 async def new_admin_name(message: Message, state: FSMContext) -> None:  # state: add_admin_name
+    await message.delete()
     if not message.text.isdigit() and 3 <= len(message.text) <= 15:
         async with state.proxy() as data:
             data['admin_name'] = message.text
             await message.answer(
-                f"Добавить\n\nИмя: <b>{data['admin_name']}</b>, ID: <b>{data['admin_id']}</b>\n\nв базу данных Администраторов?",
+                "Добавить Администратора?",
                 reply_markup=ReplyMarkups.create_rm(2, True, 'Добавить', 'Отмена'))
         await FSMAddAdmin.next()
     else:
-        await message.answer('Имя Администратора должно быть строкой, не менее 3-х и не более 15 символов!')
+        await message.answer('Имя Администратора должно быть строкой, не менее 3-х и не более 15 символов!',
+                             reply_markup=ReplyMarkups.create_rm(1, True, 'Отмена'))
 
 
 async def new_admin_confirm(message: Message, state: FSMContext) -> None:  # state: confirm
     if message.text == 'Добавить':
+        await message.delete()
         async with state.proxy() as data:
             if await SQLInserts.create_admin(admin_id=data['admin_id'], admin_name=data['admin_name']) is False:
-                await message.answer('Администратор с данным ID существует!'
+                await message.answer('Администратор с данным хешем существует!'
                                      ' Если хотите изменить имя, то удалите этого'
-                                     ' Администратора и добавьте его снова с другим именем')
-                await message.delete()
-                return await state.finish()
+                                     ' Администратора и добавьте его снова с другим именем',
+                                     reply_markup=ReplyMarkups.create_rm(1, True, 'Отмена'))
+                # return await state.finish()
+                return
             await message.answer('Администратор добавлен')
-            return await message.delete()
+            await message.delete()
     else:
         await message.delete()
         await message.answer('Администратор не был добавлен')
@@ -128,6 +136,7 @@ async def delete_admin_from_list(call: CallbackQuery) -> None:
 
 
 async def delete_admin_id(message: Message, state: FSMContext) -> None:  # state: delete_admin_id
+    await message.delete()
     if len(message.text) == 10:
         async with state.proxy() as data:
             data['admin_id'] = message.text
@@ -158,10 +167,16 @@ async def delete_admin_confirm(message: Message, state: FSMContext) -> None:
 async def select_admins(call: CallbackQuery) -> None:
     await call.answer(cache_time=10)
     await call.message.answer(SQLRequests.select_all_admins())
-    # await call.message.answer(*SQLRequests.all_admins_list()) # for testing purpuses
 
 
 # ------------------- LAST 10 FEEDBACKS ------------------
 async def last_10_feedbacks(call: CallbackQuery) -> None:
     await call.answer(cache_time=10)
     await call.message.answer(SQLRequests.last10_fb())
+
+
+async def cancel_btn(message: Message, state: FSMContext) -> None:
+    current_state = await state.get_state()
+    if current_state is not None:
+        await state.finish()
+        await message.answer('Администратор не был добавлен', reply_markup=ReplyKeyboardRemove())

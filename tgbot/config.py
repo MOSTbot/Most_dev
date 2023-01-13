@@ -33,6 +33,5 @@ def load_config(path: str | None) -> Config:
             token_oauth_path=env.str("TOKEN_OAUTH_PATH"),
             creds_key_path=env.str("CREDS_KEY_PATH"),
             creds_oauth_path=env.str("CREDS_OAUTH_PATH"),
-            # superuser_id=list(map(int, ['admins_from_sql'])) #WARNING: Temporary!
         )
     )

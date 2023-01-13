@@ -16,7 +16,9 @@ def register_other_handlers(dp: Dispatcher) -> None:
 
 async def cb_home(call: CallbackQuery, state: FSMContext) -> None:
     await call.answer(cache_time=5)
-    await state.finish()
+    current_state = await state.get_state()
+    if current_state is not None:
+        await state.finish()
     await main_menu(call.message, state)
 
 

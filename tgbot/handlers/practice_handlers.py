@@ -38,18 +38,24 @@ async def practice_mode(message: Message, state: FSMContext) -> None:
 
 async def practice_start(call: CallbackQuery, state: FSMContext) -> None:
     await call.answer(cache_time=5)
-    async with state.proxy() as data:
-        if data['flag'] is False and data['score'] == 0:
-            await call.answer(cache_time=5)
-            cases = InlineMarkups.create_im(3, ['1', '2', '3'], ['1', '2', '3'])
-            data['p_generator'] = GetPracticeQuestions()
-            data['value'] = next(data['p_generator'])
-            data['p_answers'] = SQLRequests.get_practice_answers(data['value'][1])  # type: ignore
-            await  call.message.answer(data['value'][0], reply_markup=cases)  # type: ignore
-        else:
-            await call.message.answer('Вы уже находитесь в режиме теста. Хотите начать сначала?',
-                                      reply_markup=InlineMarkups.create_im(2, ['Сначала!', 'Продолжить тест'],
-                                                                           ['do_it_again', 'practice_continue']))
+    try:
+        async with state.proxy() as data:
+            if data['flag'] is False and data['score'] == 0:
+                await call.answer(cache_time=5)
+                cases = InlineMarkups.create_im(3, ['1', '2', '3'], ['1', '2', '3'])
+                data['p_generator'] = GetPracticeQuestions()
+                data['value'] = next(data['p_generator'])
+                data['p_answers'] = SQLRequests.get_practice_answers(data['value'][1])  # type: ignore
+                await  call.message.answer(data['value'][0], reply_markup=cases)  # type: ignore
+            else:
+                await call.message.answer('Вы уже находитесь в режиме теста. Хотите начать сначала?',
+                                          reply_markup=InlineMarkups.create_im(2, ['Сначала!', 'Продолжить тест'],
+                                                                               ['do_it_again', 'practice_continue']))
+    except KeyError:
+        current_state = await state.get_state()
+        if current_state is not None:
+            await state.finish()
+        await main_menu(call.message, state)
 
 
 async def practice_reaction(call: CallbackQuery, state: FSMContext) -> None:
@@ -70,9 +76,10 @@ async def practice_reaction(call: CallbackQuery, state: FSMContext) -> None:
                     else:
                         data['score'] = data['score'] + int(data['p_answers'][2][1])
                         await call.message.answer(data['p_answers'][2][0], reply_markup=con)
-
         except KeyError:
-            await state.finish()
+            current_state = await state.get_state()
+            if current_state is not None:
+                await state.finish()
             await main_menu(call.message, state)
 
 
@@ -93,7 +100,9 @@ async def practice_continue(call: CallbackQuery, state: FSMContext) -> None:
                 else:
                     await  call.message.answer('Пожалуйста, выберите один из предложенных вариантов ⬇')
             except KeyError:
-                await state.finish()
+                current_state = await state.get_state()
+                if current_state is not None:
+                    await state.finish()
                 await main_menu(call.message, state)
 
             await  call.message.answer(data['value'][0], reply_markup=cases)
