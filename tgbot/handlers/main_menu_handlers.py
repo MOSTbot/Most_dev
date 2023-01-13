@@ -37,9 +37,8 @@ async def start(message: Message) -> None:
                                        'Мы верим, что <b>экспертный подход, общественный вклад и эмпатия</b> помогут «вернуть связь» '
                                        'с близкими и создать продукт, который основан на способности слышать, '
                                        'мыслить и противостоять ложным мнениям.',
-                               reply_markup=InlineMarkups.create_im(1, ['Перейти в главное меню',
-                                                                        'Политика конфиденциальности'],
-                                                                    ['main_menu', 'data_privacy']))
+                               reply_markup=InlineMarkups.create_im(1, ['Перейти в главное меню'],
+                                                                    ['main_menu']))
 
 
 async def main_menu(message: Message, state: FSMContext) -> None:
@@ -50,9 +49,11 @@ async def main_menu(message: Message, state: FSMContext) -> None:
         caption='Какое направление вы хотите запустить?',
         reply_markup=ReplyMarkups.create_rm(2, True, *SQLRequests
                                             .select_by_table_and_column('main_menu', 'main_menu_name')))
-    await message.answer(SQLRequests.select_main_menu_description(),
-                         reply_markup=InlineMarkups.create_im(2, ['Узнать больше о проекте'], ['sc'], [
-                             'https://relocation.guide/most']))  # FIXME: The link needs to be replaced
+    await message.answer(SQLRequests
+                         .select_main_menu_description(), reply_markup=InlineMarkups
+                         .create_im(1, ['Узнать больше о проекте', 'Политика конфиденциальности'],
+                                    ['sc', 'data_privacy'],
+                                    ['https://relocation.guide/most', '']))  # FIXME: The link needs to be replaced
 
 
 async def data_privacy(call: CallbackQuery | Message) -> None:
