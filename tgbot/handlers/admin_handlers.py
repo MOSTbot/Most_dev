@@ -65,7 +65,8 @@ async def get_data_from_gs(call: CallbackQuery) -> None:
             'a_assertions', 'a_facts',
             'main_menu', 'data_privacy',
             'practice_questions', 'practice_answers',
-            'adv_assertions', 'adv_answers']
+            'adv_assertions', 'adv_answers',
+            'notifications']
     await GoogleSheetsAPI.get_data(rng, shts, call)
 
 

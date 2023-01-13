@@ -98,3 +98,9 @@ CREATE TABLE IF NOT EXISTS data_privacy
     dp_question TEXT    NOT NULL,
     dp_answer   TEXT
 );
+
+CREATE TABLE IF NOT EXISTS notifications
+(
+    n_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    notification    TEXT    NOT NULL
+);

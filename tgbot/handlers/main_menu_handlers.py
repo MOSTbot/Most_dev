@@ -54,6 +54,8 @@ async def main_menu(message: Message, state: FSMContext) -> None:
                          .create_im(1, ['Узнать больше о проекте', 'Политика конфиденциальности'],
                                     ['sc', 'data_privacy'],
                                     ['https://relocation.guide/most', '']))  # FIXME: The link needs to be replaced
+    if res := SQLRequests.select_by_table_and_column('notifications', 'notification'):
+        await message.answer(res[0])
 
 
 async def data_privacy(call: CallbackQuery | Message) -> None:
