@@ -120,7 +120,6 @@ async def new_admin_confirm(message: Message, state: FSMContext) -> None:  # sta
                                      reply_markup=ReplyKeyboardRemove())
                 return await state.finish()
             await message.answer('Администратор добавлен')
-            await message.delete()
     else:
         await message.delete()
         await message.answer('Администратор не был добавлен')

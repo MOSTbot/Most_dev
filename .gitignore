@@ -64,7 +64,7 @@ venv.bak/
 /tgbot/db/bot.db
 /sandbox.py
 /.mypy_cache/
-/statistics.txt
+/statistics.log
 /token.pickle
 /key.pickle
 /key.json
