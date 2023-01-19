@@ -1,4 +1,5 @@
-aiogram~=2.23.1
+aiogram==2.24
 environs~=9.0
-google-api-python-client~=2.71.0
+google-api-python-client==2.73.0
+google-auth-oauthlib==0.8.0
 oauth2client~=4.1.3

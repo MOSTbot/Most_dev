@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3 as sq
+from functools import lru_cache
 from typing import Any
 
 from tgbot.utils import HashData
@@ -35,8 +36,9 @@ class SQLDeletions:
 
 class SQLRequests:
     @staticmethod
+    @lru_cache
     def select_by_table_and_column(from_: str, select_: str, where_: None | str = None,
-                                   is_: None | int = None) -> list:
+                                   is_: None | int | str = None) -> list:
         if is_ is None:
             res = cur.execute(f"SELECT {select_} "
                               f"FROM {from_}").fetchall()
@@ -46,23 +48,19 @@ class SQLRequests:
                               f"WHERE {where_} IS ?", (is_,)).fetchall()
         else:
             raise ValueError('"from_" and "is_" must be set')
+        # TODO: Logging here
         return [row[0] for row in res]
 
     @staticmethod
+    @lru_cache
     def select_main_menu_description() -> str:
         description = cur.execute("SELECT * "
                                   "FROM main_menu").fetchall()
         string = ''
         for i in description:
             string = f'{string}<b>{i[1]}</b>\n{i[2]}\n\n'
+        # TODO: Logging here
         return 'Список меню пуст' if string == '' else string
-
-    @staticmethod
-    def check_if_item_exists(table: str, column: str, value: str) -> bool:
-        res = cur.execute(f"SELECT {column} "
-                          f"FROM {table} "
-                          f"WHERE {column} IS ?", (value,)).fetchone()
-        return res is not None and res[0] == value
 
     @staticmethod
     def select_all_admins() -> str:
@@ -75,12 +73,6 @@ class SQLRequests:
             return 'Список Администраторов пуст'
         else:
             return f'<b>Список Администраторов:</b>\n\n{string}'
-
-    @staticmethod
-    def all_admins_list() -> list:
-        list_of_admins = cur.execute("SELECT admin_id "
-                                     "FROM list_of_admins").fetchall()
-        return [list_of_admins[i][0] for i, item in enumerate(list_of_admins)]
 
     @staticmethod
     def last10_fb() -> str:
@@ -97,15 +89,17 @@ class SQLRequests:
             return f'<b>Последние 10 отзывов:</b>\n\n{string}'
 
     @staticmethod
+    @lru_cache
     def get_assertions(assertion_name: None | str = None) -> list:
         assertions = cur.execute('SELECT a_assertion_name '
                                  'FROM a_assertions '
                                  'LEFT JOIN assertions a '
                                  'ON a.assertion_id = a_assertions.assertion_id '
                                  'WHERE assertion_name IS ?', (assertion_name,)).fetchall()
-
+        # TODO: Logging here
         return [assertions[i][0] for i in range(len(assertions))]
 
+    # WARNING: Needs caching!
     @staticmethod
     def get_practice_answers(p_key: str) -> list:
         return cur.execute('SELECT commentary, score '
@@ -114,6 +108,7 @@ class SQLRequests:
                            'ON pq.pr_id = practice_answers.pr_id '
                            'WHERE pq.pr_id IS ?', (p_key,)).fetchall()
 
+    # WARNING: Needs caching!
     @staticmethod
     def rnd_questions() -> list:
         random_questions = cur.execute("SELECT * "
@@ -128,31 +123,26 @@ class SQLRequests:
 
 
 class SQLInserts:
-
     @staticmethod
     async def create_admin(admin_id: str | int, admin_name: None | str = None) -> bool:
+        # TODO: Logging here
         hash_admin_id = HashData.hash_data(admin_id)[54:]
-        if SQLRequests.check_if_item_exists(table='list_of_admins', column='admin_id', value=hash_admin_id):
-            return False
-        cur.execute('INSERT INTO list_of_admins (admin_name, admin_id) '
-                    'VALUES(?, ?)', (admin_name, hash_admin_id))
-        db.commit()
-        return True
-
-    # TODO: merge two methods below into one
-    @staticmethod
-    def send_feedback(user_id: str = '', datetime: str = '', feedback: str = '') -> None:
-        cur.execute('INSERT INTO user_feedback (user_id, feedback_datetime, user_feedback) '
-                    'VALUES(?, ?, ?)', (user_id, datetime, feedback))
-        db.commit()
+        loa = cur.execute('SELECT admin_id FROM list_of_admins ').fetchone()
+        if loa is None or hash_admin_id not in loa:
+            cur.execute('INSERT INTO list_of_admins (admin_name, admin_id) '
+                        'VALUES(?, ?)', (admin_name, hash_admin_id))
+            db.commit()
+            return True
+        return False
 
     @staticmethod
-    def send_feedback_private(user_id: str = '', datetime: str = '', feedback: str = '') -> None:
-        cur.execute('INSERT INTO user_feedback_private (user_id, feedback_datetime, user_feedback) '
-                    'VALUES(?, ?, ?)', (user_id, datetime, feedback))
+    def send_feedback(table: str, user_id: str = '', datetime: str = '', feedback: str = '') -> None:
+        cur.execute(f'INSERT INTO {table} (user_id, feedback_datetime, user_feedback) '
+                    f'VALUES(?, ?, ?)', (user_id, datetime, feedback))
         db.commit()
 
 
+# WARNING: Needs caching!
 class GetFacts:
     def __init__(self, message_text: str) -> None:
         self.message_text = message_text
@@ -174,6 +164,7 @@ class GetFacts:
         raise StopIteration
 
 
+# WARNING: Needs caching!
 class GetAdFacts:
     def __init__(self, message_text: str) -> None:
         self.message_text = message_text
@@ -195,6 +186,7 @@ class GetAdFacts:
         raise StopIteration
 
 
+# WARNING: Needs caching!
 class GetPracticeQuestions:
     def __init__(self) -> None:
         self.iteration_num = 0

@@ -8,7 +8,7 @@ from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from tgbot.api import GoogleSheetsAPI
 
 from tgbot.kb import ReplyMarkups, InlineMarkups
-from tgbot.utils import FSMAddAdmin, FSMDeleteAdmin, SQLInserts, SQLRequests, SQLDeletions
+from tgbot.utils import FSMAddAdmin, FSMDeleteAdmin, SQLInserts, SQLRequests, SQLDeletions, clear_cache_globally
 
 
 def register_admin_handlers(dp: Dispatcher) -> None:
@@ -33,25 +33,29 @@ def register_admin_handlers(dp: Dispatcher) -> None:
     # ------------------- LAST 10 FEEDBACKS ------------------
     dp.register_callback_query_handler(last_10_feedbacks, text='last_10_feedbacks_ib', state='*', is_su=True)
     dp.register_callback_query_handler(last_10_feedbacks, text='last_10_feedbacks_ib', state='*', is_admin=True)
+    # ---------------------- CLEAR CACHE ---------------------
+    dp.register_callback_query_handler(clear_cache, text='clear_global_cache', state='*', is_su=True)
 
 
 async def su_start(message: Message) -> None:
-    await message.answer("Вы являетесь Глобальным Администратором бота",
+    await message.answer("Вы являетесь Глобальным Администратором",
                          reply_markup=InlineMarkups.create_im(2, ['Добавить Администратора',
                                                                   'Удалить Администратора',
                                                                   'Список Администраторов',
                                                                   'Последние 10 отзывов',
-                                                                  'Обновить данные из API'],
+                                                                  'Обновить данные из API',
+                                                                  'Очистить глобальный кэш'],
                                                               ['admin_promote_ib',
                                                                'admin_remove_ib',
                                                                'admins_list_ib',
                                                                'last_10_feedbacks_ib',
-                                                               'get_data_from_gs']))
+                                                               'get_data_from_gs',
+                                                               'clear_global_cache']))
 
 
 async def admin_start(message: Message) -> None:
-    await message.answer("Вы являетесь Администратором бота",
-                         reply_markup=InlineMarkups.create_im(2, ['Последние 10 отзывов',
+    await message.answer("Вы являетесь Администратором",
+                         reply_markup=InlineMarkups.create_im(1, ['Последние 10 отзывов',
                                                                   'Обновить данные из API'],
                                                               ['last_10_feedbacks_ib',
                                                                'get_data_from_gs']))
@@ -113,9 +117,8 @@ async def new_admin_confirm(message: Message, state: FSMContext) -> None:  # sta
                 await message.answer('Администратор с данным хешем существует!'
                                      ' Если хотите изменить имя, то удалите этого'
                                      ' Администратора и добавьте его снова с другим именем',
-                                     reply_markup=ReplyMarkups.create_rm(1, True, 'Отмена'))
-                # return await state.finish()
-                return
+                                     reply_markup=ReplyKeyboardRemove())
+                return await state.finish()
             await message.answer('Администратор добавлен')
             await message.delete()
     else:
@@ -132,7 +135,8 @@ async def delete_admin_from_list(call: CallbackQuery) -> None:
         await call.message.answer('Список Администраторов пуст - удалять некого 😱')
         return
     await call.answer(cache_time=10)
-    await call.message.answer('Укажите последние 10 знаков хеша удаляемого Администратора:')
+    await call.message.answer('Укажите последние 10 знаков хеша удаляемого Администратора:',
+                              reply_markup=ReplyMarkups.create_rm(1, True, 'Отмена'))
     await FSMDeleteAdmin.delete_admin_id.set()
 
 
@@ -180,4 +184,11 @@ async def cancel_btn(message: Message, state: FSMContext) -> None:
     current_state = await state.get_state()
     if current_state is not None:
         await state.finish()
-        await message.answer('Администратор не был добавлен', reply_markup=ReplyKeyboardRemove())
+        await message.answer('Действие отменено', reply_markup=ReplyKeyboardRemove())
+
+
+# ---------------------- CLEAR CACHE ---------------------
+async def clear_cache(call: CallbackQuery) -> None:
+    await call.answer(cache_time=10)
+    await clear_cache_globally()
+    await call.message.answer('Кэш успешно очищен')

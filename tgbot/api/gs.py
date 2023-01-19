@@ -12,6 +12,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient import discovery
 
 from tgbot import load_config
+from tgbot.utils import clear_cache_globally
 
 config = load_config(".env")
 
@@ -147,4 +148,5 @@ class GoogleSheetsAPI:
                                   f"UPDATE {table_name} SET {i} = trim({i});")
         from tgbot.utils import db
         db.commit()
+        await clear_cache_globally()
         await call.message.answer('Данные успешно обновлены! 🥳')

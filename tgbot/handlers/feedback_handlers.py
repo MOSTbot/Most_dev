@@ -46,7 +46,8 @@ async def fsm_send_feedback(message: Message, state: FSMContext) -> None:  # TOD
         hash_user_id = HashData.hash_data(message.from_user.id)[54:]
         datetime = str(message.date)
         async with state.proxy() as data:
-            SQLInserts.send_feedback(user_id=hash_user_id, datetime=datetime, feedback=data['user_feedback'])
+            SQLInserts.send_feedback(table='user_feedback', user_id=hash_user_id,
+                                     datetime=datetime, feedback=data['user_feedback'])
         await message.answer('Спасибо, ваш отзыв отправлен! 🤗',
                              reply_markup=ReplyMarkups
                              .create_rm(2, True, *SQLRequests
@@ -86,7 +87,8 @@ async def fsm_private_contacts(message: Message, state: FSMContext) -> Message |
                                                .select_by_table_and_column('main_menu', 'main_menu_name')))
 
     datetime = str(message.date)
-    SQLInserts.send_feedback_private(user_id=message.from_user.id, datetime=datetime, feedback=message.text)
+    SQLInserts.send_feedback(table='user_feedback_private', user_id=message.from_user.id,
+                             datetime=datetime, feedback=message.text)
     await message.delete()
     await message.answer('Ваши контакты успешно отправлены, спасибо вам еще раз! ☺', reply_markup=ReplyMarkups
                          .create_rm(2, True, *SQLRequests
