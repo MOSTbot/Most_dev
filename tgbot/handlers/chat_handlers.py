@@ -5,7 +5,7 @@ from aiogram.types import Message, CallbackQuery
 
 from tgbot.handlers import main_menu
 from tgbot.kb import ReplyMarkups, InlineMarkups
-from tgbot.utils import SQLRequests, GetFacts, GetAdFacts
+from tgbot.utils import SQLRequests
 from tgbot.utils.util_classes import SectionName
 
 
@@ -48,13 +48,13 @@ async def chat_mode(message: Message) -> None:
 # WARNING: Catch exception 'Message text is empty' (Admin has not added any facts yet)
 async def assertions(message: Message, state: FSMContext) -> None:  # These are callback-buttons!
     async with state.proxy() as data:
-        data['message_text'], data['c_generator']  = message.text, GetFacts(message.text)
-        await  message.answer(next(data['c_generator']),
-                             reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы', '👍', '👎',
-                                                                      'Оставить отзыв', 'Главное меню'],
-                                                                  ['more_arguments', 'thematic_questions', 'like_btn',
-                                                                   'dislike_btn', 'feedback',
-                                                                   'main_menu']))
+        data['message_text'], data['query'], data['counter'] = message.text, SQLRequests.get_facts(message.text), 0
+        await  message.answer((data['query'][data['counter']][0]),
+                              reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы', '👍', '👎',
+                                                                       'Оставить отзыв', 'Главное меню'],
+                                                                   ['more_arguments', 'thematic_questions', 'like_btn',
+                                                                    'dislike_btn', 'feedback',
+                                                                    'main_menu']))
 
 
 async def cb_more_args(call: CallbackQuery, state: FSMContext) -> None:
@@ -62,7 +62,8 @@ async def cb_more_args(call: CallbackQuery, state: FSMContext) -> None:
         await call.answer(cache_time=5)
         try:
             async with state.proxy() as data:
-                await call.message.answer(next(data['c_generator']),
+                data['counter'] += 1
+                await call.message.answer((data['query'][data['counter']][0]),
                                           reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы',
                                                                                    '👍', '👎',
                                                                                    'Оставить отзыв', 'Главное меню'],
@@ -75,7 +76,7 @@ async def cb_more_args(call: CallbackQuery, state: FSMContext) -> None:
                 await state.finish()
             await main_menu(call.message, state)
 
-    except StopIteration:
+    except IndexError:
         if data['message_text'] in SQLRequests.select_by_table_and_column('assertions', 'assertion_name'):
             await  call.message.answer('Хотите посмотреть дополнительные вопросы по теме?',
                                        reply_markup=InlineMarkups.
@@ -84,6 +85,8 @@ async def cb_more_args(call: CallbackQuery, state: FSMContext) -> None:
         elif data['message_text'] in SQLRequests.select_by_table_and_column('a_assertions', 'a_assertion_name'):
             other_questions = ReplyMarkups.create_rm(2, True, *SQLRequests.rnd_questions())
             await call.message.answer('Вы можете выбрать другие вопросы из меню ниже:', reply_markup=other_questions)
+        async with state.proxy() as data:
+            data['counter'] = 0
 
 
 async def thematic_questions(call: CallbackQuery, state: FSMContext) -> None:
@@ -99,19 +102,20 @@ async def thematic_questions(call: CallbackQuery, state: FSMContext) -> None:
 
 async def a_questions(message: Message, state: FSMContext) -> None:  # These are callback-buttons!
     async with state.proxy() as data:
-        data['message_text'], data['c_generator'] = message.text, GetAdFacts(message.text)
+        data['message_text'], data['query'], data['counter'] = message.text, SQLRequests.get_ad_facts(message.text), 0
         try:
-            await  message.answer(next(data['c_generator']),
-                                 reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы', '👍', '👎',
-                                                                          'Оставить отзыв', 'Главное меню'],
-                                                                      ['more_arguments', 'random_questions',
-                                                                       'some callback',
-                                                                       'some callback', 'feedback',
-                                                                       'main_menu']))  # WARNING: Dynamic arguments can't be recognized!
-        except StopIteration:
+            await  message.answer((data['query'][data['counter']][0]),
+                                  reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы', '👍', '👎',
+                                                                           'Оставить отзыв', 'Главное меню'],
+                                                                       ['more_arguments', 'random_questions',
+                                                                        'some callback',
+                                                                        'some callback', 'feedback',
+                                                                        'main_menu']))  # WARNING: Dynamic arguments can't be recognized!
+        except IndexError:
             await message.answer('Раздел находится в разработке',
                                  reply_markup=InlineMarkups.create_im(1, ['Главное меню'],
                                                                       ['main_menu']))
+            await state.finish()
 
 
 async def random_questions(call: CallbackQuery) -> None:

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sqlite3 as sq
 from functools import lru_cache
-from typing import Any
 
 from tgbot.utils import HashData
 
@@ -36,7 +35,13 @@ class SQLDeletions:
 
 class SQLRequests:
     @staticmethod
-    @lru_cache
+    # @lru_cache
+    def get_practice_questions() -> list:
+        return cur.execute("SELECT question_name, pr_id "
+                           "FROM practice_questions").fetchall()
+
+    @staticmethod
+    # @lru_cache
     def select_by_table_and_column(from_: str, select_: str, where_: None | str = None,
                                    is_: None | int | str = None) -> list:
         if is_ is None:
@@ -52,7 +57,7 @@ class SQLRequests:
         return [row[0] for row in res]
 
     @staticmethod
-    @lru_cache
+    # @lru_cache
     def select_main_menu_description() -> str:
         description = cur.execute("SELECT * "
                                   "FROM main_menu").fetchall()
@@ -89,7 +94,7 @@ class SQLRequests:
             return f'<b>Последние 10 отзывов:</b>\n\n{string}'
 
     @staticmethod
-    @lru_cache
+    # @lru_cache
     def get_assertions(assertion_name: None | str = None) -> list:
         assertions = cur.execute('SELECT a_assertion_name '
                                  'FROM a_assertions '
@@ -99,8 +104,26 @@ class SQLRequests:
         # TODO: Logging here
         return [assertions[i][0] for i in range(len(assertions))]
 
-    # WARNING: Needs caching!
     @staticmethod
+    # @lru_cache
+    def get_facts(message_text: str) -> list:
+        return cur.execute('SELECT fact_name '
+                           'FROM assertions '
+                           'LEFT JOIN facts f '
+                           'ON assertions.assertion_id = f.assertion_id '
+                           'WHERE assertion_name IS ?', (message_text,)).fetchall()
+
+    @staticmethod
+    # @lru_cache
+    def get_ad_facts(message_text: str) -> list:
+        return cur.execute('SELECT a_fact_name '
+                           'FROM a_facts '
+                           'LEFT JOIN a_assertions aa '
+                           'ON aa.a_assertion_id = a_facts.a_assertion_id '
+                           'WHERE a_assertion_name IS ?', (message_text,)).fetchall()
+
+    @staticmethod
+    # @lru_cache
     def get_practice_answers(p_key: str) -> list:
         return cur.execute('SELECT commentary, score '
                            'FROM practice_answers '
@@ -108,7 +131,6 @@ class SQLRequests:
                            'ON pq.pr_id = practice_answers.pr_id '
                            'WHERE pq.pr_id IS ?', (p_key,)).fetchall()
 
-    # WARNING: Needs caching!
     @staticmethod
     def rnd_questions() -> list:
         random_questions = cur.execute("SELECT * "
@@ -140,65 +162,3 @@ class SQLInserts:
         cur.execute(f'INSERT INTO {table} (user_id, feedback_datetime, user_feedback) '
                     f'VALUES(?, ?, ?)', (user_id, datetime, feedback))
         db.commit()
-
-
-# WARNING: Needs caching!
-class GetFacts:
-    def __init__(self, message_text: str) -> None:
-        self.message_text = message_text
-        self.iteration_num = 0
-
-    def __iter__(self) -> GetFacts:
-        return self
-
-    def __next__(self) -> Any:
-        facts = cur.execute('SELECT fact_name '
-                            'FROM assertions '
-                            'LEFT JOIN facts f '
-                            'ON assertions.assertion_id = f.assertion_id '
-                            'WHERE assertion_name IS ?', (self.message_text,)).fetchall()
-        if self.iteration_num < len(facts):
-            res = facts[self.iteration_num][0]
-            self.iteration_num += 1
-            return res
-        raise StopIteration
-
-
-# WARNING: Needs caching!
-class GetAdFacts:
-    def __init__(self, message_text: str) -> None:
-        self.message_text = message_text
-        self.iteration_num = 0
-
-    def __iter__(self) -> GetAdFacts:
-        return self
-
-    def __next__(self) -> Any:
-        facts = cur.execute('SELECT a_fact_name '
-                            'FROM a_facts '
-                            'LEFT JOIN a_assertions aa '
-                            'ON aa.a_assertion_id = a_facts.a_assertion_id '
-                            'WHERE a_assertion_name IS ?', (self.message_text,)).fetchall()
-        if self.iteration_num < len(facts):
-            res = facts[self.iteration_num][0]
-            self.iteration_num += 1
-            return res
-        raise StopIteration
-
-
-# WARNING: Needs caching!
-class GetPracticeQuestions:
-    def __init__(self) -> None:
-        self.iteration_num = 0
-
-    def __iter__(self) -> GetPracticeQuestions:
-        return self
-
-    def __next__(self) -> tuple:
-        practice_questions = cur.execute("SELECT question_name, pr_id "
-                                         "FROM practice_questions").fetchall()
-        if self.iteration_num < len(practice_questions):
-            res = practice_questions[self.iteration_num][0], practice_questions[self.iteration_num][1]
-            self.iteration_num += 1
-            return res
-        raise StopIteration

@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.contrib.fsm_storage.redis import RedisStorage2
 
 from tgbot import load_config
 from tgbot.handlers.registration import register_all_middlewares, register_all_filters, register_all_handlers, \
@@ -11,7 +11,7 @@ from tgbot.handlers.registration import register_all_middlewares, register_all_f
 from tgbot.utils import db, Disp
 
 config = load_config(".env")
-storage = MemoryStorage()
+storage = RedisStorage2()
 bot = Bot(token=config.tg_bot.token, parse_mode='HTML')
 Disp.disp = Dispatcher(bot, storage=storage)
 
