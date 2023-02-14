@@ -50,11 +50,10 @@ async def assertions(message: Message, state: FSMContext) -> None:  # These are 
     async with state.proxy() as data:
         data['message_text'], data['query'], data['counter'] = message.text, SQLRequests.get_facts(message.text), 0
         await  message.answer((data['query'][data['counter']][0]),
-                              reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы', '👍', '👎',
+                              reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы',
                                                                        'Оставить отзыв', 'Главное меню'],
-                                                                   ['more_arguments', 'thematic_questions', 'like_btn',
-                                                                    'dislike_btn', 'feedback',
-                                                                    'main_menu']))
+                                                                   ['more_arguments', 'thematic_questions',
+                                                                    'feedback', 'main_menu']))
 
 
 async def cb_more_args(call: CallbackQuery, state: FSMContext) -> None:
@@ -65,10 +64,8 @@ async def cb_more_args(call: CallbackQuery, state: FSMContext) -> None:
                 data['counter'] += 1
                 await call.message.answer((data['query'][data['counter']][0]),
                                           reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы',
-                                                                                   '👍', '👎',
                                                                                    'Оставить отзыв', 'Главное меню'],
                                                                                ['more_arguments', 'thematic_questions',
-                                                                                'some callback', 'some callback',
                                                                                 'feedback', 'main_menu']))
         except (TypeError, KeyError):
             current_state = await state.get_state()
@@ -105,12 +102,10 @@ async def a_questions(message: Message, state: FSMContext) -> None:  # These are
         data['message_text'], data['query'], data['counter'] = message.text, SQLRequests.get_ad_facts(message.text), 0
         try:
             await  message.answer((data['query'][data['counter']][0]),
-                                  reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы', '👍', '👎',
+                                  reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы',
                                                                            'Оставить отзыв', 'Главное меню'],
                                                                        ['more_arguments', 'random_questions',
-                                                                        'some callback',
-                                                                        'some callback', 'feedback',
-                                                                        'main_menu']))  # WARNING: Dynamic arguments can't be recognized!
+                                                                        'feedback', 'main_menu']))
         except IndexError:
             await message.answer('Раздел находится в разработке',
                                  reply_markup=InlineMarkups.create_im(1, ['Главное меню'],
