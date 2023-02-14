@@ -14,7 +14,7 @@ from tgbot.utils.util_classes import SectionName
 def register_practice_handlers(dp: Dispatcher) -> None:
     dp.register_message_handler(practice_mode, commands=["practice"], state="*")
     dp.register_message_handler(practice_mode,
-                                Text(equals=['🏋 Симулятор разговора', 'Сыграть еще раз!'], ignore_case=True),
+                                Text(equals=['🏋 Режим тренажера', 'Сыграть еще раз!'], ignore_case=True),
                                 state="*")
     dp.register_callback_query_handler(practice_start, text='lets_go', state="*")
     dp.register_callback_query_handler(practice_reaction, text=['1', '2', '3'], state="*")
@@ -28,7 +28,7 @@ async def practice_mode(message: Message, state: FSMContext) -> None:
         data['p_flag'], data['score'], data['p_query'], data['question'], data['p_counter'] = False, 0, None, None, 0
     await  message.answer_photo(
         photo=open('tgbot/assets/practice.jpg', 'rb'),
-        caption='🟢 МОСТ работает в режиме симулятор разговора.', reply_markup=ReplyKeyboardRemove())
+        caption='🟢 МОСТ работает в режиме тренажера.', reply_markup=ReplyKeyboardRemove())
     await  message.answer('Проверьте, насколько хорошо вы умеете бороться с пропагандой.'
                           ' Мы собрали для вас 10 мифов о войне и для каждого подобрали 3 варианта ответа —'
                           ' выберите верные, а бот МОСТ даст подробные комментарии.',
