@@ -39,7 +39,7 @@ def register_admin_handlers(dp: Dispatcher) -> None:
 
 async def su_start(message: Message) -> None:
     await message.answer("Вы являетесь Глобальным Администратором",
-                         reply_markup=InlineMarkups.create_im(2, ['Добавить Администратора',
+                         reply_markup=InlineMarkups.create_im(1, ['Добавить Администратора',
                                                                   'Удалить Администратора',
                                                                   'Список Администраторов',
                                                                   'Последние 10 отзывов',
