@@ -51,17 +51,13 @@ async def practice_start(call: CallbackQuery, state: FSMContext) -> None:
                 await call.message.answer('Вы уже находитесь в режиме теста. Хотите начать сначала?',
                                           reply_markup=InlineMarkups.create_im(2, ['Сначала!', 'Продолжить тест'],
                                                                                ['do_it_again', 'practice_continue']))
-    except KeyError:
-        current_state = await state.get_state()
-        if current_state is not None:
-            await state.finish()
-        await main_menu(call.message, state)
+    except (KeyError, IndexError):
+        return await key_error(call, state)
 
 
 async def practice_reaction(call: CallbackQuery, state: FSMContext) -> None:
     await call.answer(cache_time=5)
     async with state.proxy() as data:
-
         try:
             if data['p_flag'] is False:
                 data['p_flag'] = True
@@ -77,57 +73,55 @@ async def practice_reaction(call: CallbackQuery, state: FSMContext) -> None:
                         data['score'] = data['score'] + int(data['p_answers'][2][1])
                         await call.message.answer(data['p_answers'][2][0], reply_markup=con)
         except KeyError:
-            current_state = await state.get_state()
-            if current_state is not None:
-                await state.finish()
-            await main_menu(call.message, state)
+            return await key_error(call, state)
 
 
 async def practice_continue(call: CallbackQuery, state: FSMContext) -> None:
     async with state.proxy() as data:
+        try:
+            if data['p_counter'] == len(data['p_query']) - 1:
+                menu = ReplyMarkups.create_rm(3, True, 'Сыграть еще раз!', '🧠 Психология разговора',
+                                              '📚 База аргументов', 'Главное меню')
+                if data['score'] < 8:
+                    await call.message.answer('<b>Убедить не получилось</b> 🙁\n'
+                                              'Почитайте нашу базу аргументов и рекомендации психологов по ведению диалогов,'
+                                              ' чтобы в следующий раз использовать бережную и проверенную аргументацию.',
+                                              reply_markup=menu)
+                elif 7 < data['score'] < 15:
+                    await call.message.answer('<b>На верном пути!</b> ❗\n'
+                                              'Вы смогли ответить почти на все тезисы. '
+                                              'Почитайте нашу базу аргументов и рекомендации психологов по ведению диалогов,'
+                                              ' чтобы в следующий раз иметь ответ на любой вопрос.',
+                                              reply_markup=menu)
+                else:
+                    await call.message.answer('<b>Оппонент убежден!</b> ✅\n'
+                                              'Бережность, открытость и проверенная информация '
+                                              '– то, что вам помогло это сделать. Браво.',
+                                              reply_markup=InlineMarkups.create_im(1, ['Главное меню'], ['main_menu']))
+                data['p_flag'], data['score'], data['p_counter'] = False, 0, 0
+                return
+        except KeyError:
+            return await key_error(call, state)
+
+        await call.answer(cache_time=5)
+        cases = InlineMarkups.create_im(3, ['1', '2', '3'], ['1', '2', '3'])
 
         try:
-            await call.answer(cache_time=5)
-            cases = InlineMarkups.create_im(3, ['1', '2', '3'], ['1', '2', '3'])
-
-            try:
-                if data['p_flag'] is True and 'question' in data.keys():
-                    data['p_flag'] = False
-                    data['p_counter'] += 1
-                    data['question'] = data['p_query'][data['p_counter']]
-                    data['p_answers'] = SQLRequests.get_practice_answers(data['question'][1])
-                elif 'question' not in data.keys():
-                    return await main_menu(call.message, state)
-                else:
-                    await  call.message.answer('Пожалуйста, выберите один из предложенных вариантов ⬇')
-            except KeyError:
-                current_state = await state.get_state()
-                if current_state is not None:
-                    await state.finish()
-                await main_menu(call.message, state)
-
-            await  call.message.answer(data['question'][0], reply_markup=cases)
-
-        except KeyError:
-            menu = ReplyMarkups.create_rm(3, True, 'Сыграть еще раз!', '🧠 Психология разговора',
-                                          '📚 База аргументов', 'Главное меню')
-            if data['score'] < 8:
-                await call.message.answer('<b>Убедить не получилось</b> 🙁\n'
-                                          'Почитайте нашу базу аргументов и рекомендации психологов по ведению диалогов,'
-                                          ' чтобы в следующий раз использовать бережную и проверенную аргументацию.',
-                                          reply_markup=menu)
-            elif 7 < data['score'] < 15:
-                await call.message.answer('<b>На верном пути!</b> ❗\n'
-                                          'Вы смогли ответить почти на все тезисы. '
-                                          'Почитайте нашу базу аргументов и рекомендации психологов по ведению диалогов,'
-                                          ' чтобы в следующий раз иметь ответ на любой вопрос.',
-                                          reply_markup=menu)
+            if data['p_flag'] is True and 'question' in data.keys():
+                data['p_flag'] = False
+                data['p_counter'] += 1
+                data['question'] = data['p_query'][data['p_counter']]
+                data['p_answers'] = SQLRequests.get_practice_answers(data['question'][1])
+            elif 'question' not in data.keys():
+                return await main_menu(call.message, state)
             else:
-                await call.message.answer('<b>Оппонент убежден!</b> ✅\n'
-                                          'Бережность, открытость и проверенная информация '
-                                          '– то, что вам помогло это сделать. Браво.',
-                                          reply_markup=InlineMarkups.create_im(1, ['Главное меню'], ['main_menu']))
-            data['p_flag'], data['score'], data['p_counter'] = False, 0, 0
+                await  call.message.answer('Пожалуйста, выберите один из предложенных вариантов ⬇')
+        except KeyError:
+            return await key_error(call, state)
+        try:
+            await  call.message.answer(data['question'][0], reply_markup=cases)
+        except KeyError:
+            return await key_error(call, state)
 
 
 async def do_it_again(call: CallbackQuery, state: FSMContext) -> None:
@@ -135,3 +129,13 @@ async def do_it_again(call: CallbackQuery, state: FSMContext) -> None:
     async with state.proxy() as data:
         data['p_flag'], data['score'], data['p_query'], data['question'], data['p_counter'] = False, 0, None, None, 0
     await practice_start(call, state)
+
+
+async def key_error(call: CallbackQuery, state: FSMContext) -> None:
+    await call.answer(cache_time=5)
+    current_state = await state.get_state()
+    if current_state is not None:
+        await state.finish()
+    await call.message.answer('Кажется что-то пошло не так... Пожалуйста, '
+                              'попробуйте еще раз или вернитесь в главное меню',
+                              reply_markup=InlineMarkups.create_im(1, ['Главное меню'], ['main_menu']))

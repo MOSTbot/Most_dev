@@ -8,13 +8,13 @@ from tgbot import load_config
 from tgbot.handlers.registration import register_all_middlewares, register_all_filters, register_all_handlers, \
     register_all_bot_commands
 
-from tgbot.utils import db, Disp
+from tgbot.utils import db, Disp, SearchIndex, SQLRequests
 
 config = load_config(".env")
 storage = RedisStorage2()
 bot = Bot(token=config.tg_bot.token, parse_mode='HTML')
 Disp.disp = Dispatcher(bot, storage=storage)
-
+SearchIndex.search_index = SQLRequests.get_search_index()
 
 async def main() -> None:
     # logging.basicConfig(

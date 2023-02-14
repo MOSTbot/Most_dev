@@ -9,6 +9,11 @@ from aiogram import Dispatcher
 
 
 @dataclass
+class SearchIndex:
+    search_index: list[str] | None = None
+
+
+@dataclass
 class SectionName:
     s_name: str | None = None
 
@@ -31,3 +36,5 @@ async def clear_cache_globally() -> None:
                if isinstance(i, _lru_cache_wrapper)]
     for obj in objects:
         obj.cache_clear()
+    from tgbot.utils import SQLRequests
+    SearchIndex.search_index = SQLRequests.get_search_index()

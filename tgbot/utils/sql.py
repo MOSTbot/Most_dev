@@ -170,6 +170,16 @@ class SQLRequests:
         random_questions = cur.fetchall()
         return [random_questions[i][0] for i in range(len(random_questions))]
 
+    @staticmethod
+    def get_search_index() -> list:
+        cur.execute("SELECT assertion_name "
+                    "FROM assertions "
+                    "UNION "
+                    "SELECT a_assertion_name "
+                    "FROM a_assertions;")
+        res = cur.fetchall()
+        return [row[0] for row in res]
+
 
 class SQLInserts:
     @staticmethod
