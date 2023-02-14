@@ -14,6 +14,12 @@ class TgBot:
     token_oauth_path: str
     creds_key_path: str
     creds_oauth_path: str
+    pg_host: str
+    pg_user: str
+    pg_pass: str
+    pg_db_name: str
+    pg_port: str
+
 
 @dataclass
 class Config:
@@ -33,5 +39,10 @@ def load_config(path: str | None) -> Config:
             token_oauth_path=env.str("TOKEN_OAUTH_PATH"),
             creds_key_path=env.str("CREDS_KEY_PATH"),
             creds_oauth_path=env.str("CREDS_OAUTH_PATH"),
+            pg_host=env.str("PG_HOST"),
+            pg_user=env.str("PG_USER"),
+            pg_pass=env.str("PG_PASSWORD"),
+            pg_db_name=env.str("PG_DB_NAME"),
+            pg_port=env.str("PG_PORT")
         )
     )

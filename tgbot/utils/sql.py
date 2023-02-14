@@ -1,11 +1,19 @@
 from __future__ import annotations
 
-import sqlite3 as sq
 from functools import lru_cache
 
+import psycopg
+
+from tgbot import load_config
 from tgbot.utils import HashData
 
-db = sq.connect('tgbot/db/bot.db')
+config = load_config(".env")
+
+db = psycopg.connect(dbname=config.tg_bot.pg_db_name,
+                     user=config.tg_bot.pg_user,
+                     password=config.tg_bot.pg_pass,
+                     host=config.tg_bot.pg_host,
+                     port=config.tg_bot.pg_port)
 cur = db.cursor()
 
 
@@ -13,7 +21,7 @@ def _init_db() -> None:
     """Create database"""
     with open('tgbot/db/create_db.sql', 'r') as f:
         sql = f.read()
-    cur.executescript(sql)
+    cur.execute(sql)
     db.commit()
 
 
@@ -22,45 +30,53 @@ _init_db()
 
 class SQLDeletions:
     @staticmethod
-    async def delete_from_table(table: str, column: str, value: str) -> bool:
-        if cur.execute(f"SELECT * "
-                       f"FROM {table} "
-                       f"WHERE {column} IS ?", (value,)).fetchone():
+    def delete_from_table(table: str, column: str, value: str) -> bool:
+        cur.execute(f"SELECT * "
+                    f"FROM {table} "
+                    f"WHERE {column} = %s", (value,))
+        if cur.fetchone():
             cur.execute(f"DELETE FROM {table} "
-                        f"WHERE {column} IS ?", (value,))
+                        f"WHERE {column} = %s", (value,))
             db.commit()
             return True
         return False
 
 
 class SQLRequests:
-    @staticmethod
-    # @lru_cache
-    def get_practice_questions() -> list:
-        return cur.execute("SELECT question_name, pr_id "
-                           "FROM practice_questions").fetchall()
+    maxsize = 300
 
     @staticmethod
-    # @lru_cache
+    @lru_cache(maxsize=maxsize)
+    def get_practice_questions() -> list:
+        cur.execute('SELECT question_name, pr_id '
+                    'FROM practice_questions '
+                    'ORDER BY 1')
+        return cur.fetchall()
+
+    @staticmethod
+    @lru_cache(maxsize=maxsize)
     def select_by_table_and_column(from_: str, select_: str, where_: None | str = None,
                                    is_: None | int | str = None) -> list:
         if is_ is None:
-            res = cur.execute(f"SELECT {select_} "
-                              f"FROM {from_}").fetchall()
+            cur.execute(f"SELECT {select_} "
+                        f"FROM {from_}")
+            res = cur.fetchall()
         elif where_ is not None:
-            res = cur.execute(f"SELECT {select_} "
-                              f"FROM {from_} "
-                              f"WHERE {where_} IS ?", (is_,)).fetchall()
+            cur.execute(f"SELECT {select_} "
+                        f"FROM {from_} "
+                        f"WHERE {where_} = %s", (is_,))
+            res = cur.fetchall()
         else:
             raise ValueError('"from_" and "is_" must be set')
         # TODO: Logging here
         return [row[0] for row in res]
 
     @staticmethod
-    # @lru_cache
+    @lru_cache(maxsize=maxsize)
     def select_main_menu_description() -> str:
-        description = cur.execute("SELECT * "
-                                  "FROM main_menu").fetchall()
+        cur.execute("SELECT * "
+                    "FROM main_menu")
+        description = cur.fetchall()
         string = ''
         for i in description:
             string = f'{string}<b>{i[1]}</b>\n{i[2]}\n\n'
@@ -69,8 +85,9 @@ class SQLRequests:
 
     @staticmethod
     def select_all_admins() -> str:
-        admins_list = cur.execute("SELECT * "
-                                  "FROM list_of_admins").fetchall()
+        cur.execute("SELECT * "
+                    "FROM list_of_admins")
+        admins_list = cur.fetchall()
         string = ''
         for i in admins_list:
             string = f'{string}Имя: <b>{i[1]}</b>\nХеш ID: <b>{i[2]}</b>\n\n'
@@ -81,10 +98,11 @@ class SQLRequests:
 
     @staticmethod
     def last10_fb() -> str:
-        last_10 = cur.execute("SELECT * "
-                              "FROM user_feedback "
-                              "ORDER BY feedback_datetime "
-                              "DESC LIMIT 10").fetchall()
+        cur.execute("SELECT * "
+                    "FROM user_feedback "
+                    "ORDER BY feedback_datetime "
+                    "DESC LIMIT 10")
+        last_10 = cur.fetchall()
         string = ''
         for i in last_10:
             string = f'{string}Последние 10 цифр хеша: <b>{i[1]}</b>\nДата и время: <b>{i[2]}</b>\nОтзыв: <b>{i[3]}</b>\n\n'
@@ -94,53 +112,62 @@ class SQLRequests:
             return f'<b>Последние 10 отзывов:</b>\n\n{string}'
 
     @staticmethod
-    # @lru_cache
+    @lru_cache(maxsize=maxsize)
     def get_assertions(assertion_name: None | str = None) -> list:
-        assertions = cur.execute('SELECT a_assertion_name '
-                                 'FROM a_assertions '
-                                 'LEFT JOIN assertions a '
-                                 'ON a.assertion_id = a_assertions.assertion_id '
-                                 'WHERE assertion_name IS ?', (assertion_name,)).fetchall()
+        cur.execute('SELECT a_assertion_name '
+                    'FROM a_assertions '
+                    'LEFT JOIN assertions a '
+                    'ON a.assertion_id = a_assertions.assertion_id '
+                    'WHERE assertion_name = %s '
+                    'ORDER BY 1', (assertion_name,))
+        assertions = cur.fetchall()
         # TODO: Logging here
         return [assertions[i][0] for i in range(len(assertions))]
 
     @staticmethod
-    # @lru_cache
+    @lru_cache(maxsize=maxsize)
     def get_facts(message_text: str) -> list:
-        return cur.execute('SELECT fact_name '
-                           'FROM assertions '
-                           'LEFT JOIN facts f '
-                           'ON assertions.assertion_id = f.assertion_id '
-                           'WHERE assertion_name IS ?', (message_text,)).fetchall()
+        cur.execute('SELECT fact_name '
+                    'FROM assertions '
+                    'LEFT JOIN facts f '
+                    'ON assertions.assertion_id = f.assertion_id '
+                    'WHERE assertion_name = %s '
+                    'ORDER BY 1', (message_text,))
+        return cur.fetchall()
 
     @staticmethod
-    # @lru_cache
+    @lru_cache(maxsize=maxsize)
     def get_ad_facts(message_text: str) -> list:
-        return cur.execute('SELECT a_fact_name '
-                           'FROM a_facts '
-                           'LEFT JOIN a_assertions aa '
-                           'ON aa.a_assertion_id = a_facts.a_assertion_id '
-                           'WHERE a_assertion_name IS ?', (message_text,)).fetchall()
+        cur.execute('SELECT a_fact_name '
+                    'FROM a_facts '
+                    'LEFT JOIN a_assertions aa '
+                    'ON aa.a_assertion_id = a_facts.a_assertion_id '
+                    'WHERE a_assertion_name = %s '
+                    'ORDER BY 1', (message_text,))
+        return cur.fetchall()
 
     @staticmethod
-    # @lru_cache
+    @lru_cache(maxsize=maxsize)
     def get_practice_answers(p_key: str) -> list:
-        return cur.execute('SELECT commentary, score '
-                           'FROM practice_answers '
-                           'LEFT JOIN practice_questions pq '
-                           'ON pq.pr_id = practice_answers.pr_id '
-                           'WHERE pq.pr_id IS ?', (p_key,)).fetchall()
+        cur.execute('SELECT commentary, score '
+                    'FROM practice_answers '
+                    'LEFT JOIN practice_questions pq '
+                    'ON pq.pr_id = practice_answers.pr_id '
+                    'WHERE pq.pr_id = %s '
+                    'ORDER BY 1', (p_key,))
+        return cur.fetchall()
 
     @staticmethod
     def rnd_questions() -> list:
-        random_questions = cur.execute("SELECT * "
-                                       "FROM (SELECT assertion_name "
-                                       "FROM assertions "
-                                       "UNION "
-                                       "SELECT a_assertion_name "
-                                       "FROM a_assertions) "
-                                       "ORDER BY RANDOM() "
-                                       "LIMIT 6;").fetchall()
+        cur.execute("SELECT * "
+                    "FROM (SELECT assertion_name "
+                    "FROM assertions "
+                    "UNION "
+                    "SELECT a_assertion_name "
+                    "FROM a_assertions) AS dt "
+                    "ORDER BY RANDOM() "
+                    "LIMIT 6;")
+        random_questions = cur.fetchall()
         return [random_questions[i][0] for i in range(len(random_questions))]
 
 
@@ -149,10 +176,11 @@ class SQLInserts:
     async def create_admin(admin_id: str | int, admin_name: None | str = None) -> bool:
         # TODO: Logging here
         hash_admin_id = HashData.hash_data(admin_id)[54:]
-        loa = cur.execute('SELECT admin_id FROM list_of_admins ').fetchone()
+        cur.execute('SELECT admin_id FROM list_of_admins ')
+        loa = cur.fetchone()
         if loa is None or hash_admin_id not in loa:
             cur.execute('INSERT INTO list_of_admins (admin_name, admin_id) '
-                        'VALUES(?, ?)', (admin_name, hash_admin_id))
+                        'VALUES(%s, %s)', (admin_name, hash_admin_id))
             db.commit()
             return True
         return False
@@ -160,5 +188,5 @@ class SQLInserts:
     @staticmethod
     def send_feedback(table: str, user_id: str = '', datetime: str = '', feedback: str = '') -> None:
         cur.execute(f'INSERT INTO {table} (user_id, feedback_datetime, user_feedback) '
-                    f'VALUES(?, ?, ?)', (user_id, datetime, feedback))
+                    f'VALUES(%s, %s, %s)', (user_id, datetime, feedback))
         db.commit()

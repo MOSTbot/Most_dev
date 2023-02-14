@@ -32,6 +32,7 @@ class AdFilter(BoundFilter):
     async def check(self, message: Message) -> bool:
         if self.is_admin is not None:
             hash_admin_id = HashData.hash_data(message.from_user.id)[54:]
-            admins_list = cur.execute("SELECT admin_id FROM list_of_admins").fetchall()
+            cur.execute("SELECT admin_id FROM list_of_admins")
+            admins_list = cur.fetchall()
             return (hash_admin_id in [i[0] for i in admins_list]) == self.is_admin
         return False

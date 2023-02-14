@@ -44,7 +44,7 @@ async def practice_start(call: CallbackQuery, state: FSMContext) -> None:
                 await call.answer(cache_time=5)
                 cases = InlineMarkups.create_im(3, ['1', '2', '3'], ['1', '2', '3'])
                 data['p_query'] = SQLRequests.get_practice_questions()
-                data['question'] = data['p_query'][data['p_counter']]
+                data['question'] = data['p_query'][data['p_counter']] #WARNING! If the table is empty IndexError is raised!
                 data['p_answers'] = SQLRequests.get_practice_answers(data['question'][1])  # type: ignore
                 await  call.message.answer(data['question'][0], reply_markup=cases)  # type: ignore
             else:

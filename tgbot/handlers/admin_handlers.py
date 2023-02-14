@@ -113,7 +113,7 @@ async def new_admin_confirm(message: Message, state: FSMContext) -> None:  # sta
     if message.text == 'Добавить':
         await message.delete()
         async with state.proxy() as data:
-            if await SQLInserts.create_admin(admin_id=data['admin_id'], admin_name=data['admin_name']) is False:
+            if SQLInserts.create_admin(admin_id=data['admin_id'], admin_name=data['admin_name']) is False:
                 await message.answer('Администратор с данным хешем существует!'
                                      ' Если хотите изменить имя, то удалите этого'
                                      ' Администратора и добавьте его снова с другим именем',
@@ -155,7 +155,7 @@ async def delete_admin_id(message: Message, state: FSMContext) -> None:  # state
 async def delete_admin_confirm(message: Message, state: FSMContext) -> None:
     if message.text == 'Удалить':
         async with state.proxy() as data:
-            if await SQLDeletions.delete_from_table(table='list_of_admins', column='admin_id', value=data['admin_id']):
+            if SQLDeletions.delete_from_table(table='list_of_admins', column='admin_id', value=data['admin_id']):
                 await message.answer('Администратор удален')
                 await message.delete()
                 return await state.finish()
