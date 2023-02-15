@@ -149,12 +149,12 @@ class SQLRequests:
     @staticmethod
     @lru_cache(maxsize=maxsize)
     def get_practice_answers(p_key: str) -> list:
-        cur.execute('SELECT commentary, score '
+        cur.execute('SELECT commentary, score, answer_num '
                     'FROM practice_answers '
                     'LEFT JOIN practice_questions pq '
                     'ON pq.pr_id = practice_answers.pr_id '
                     'WHERE pq.pr_id = %s '
-                    'ORDER BY 1', (p_key,))
+                    'ORDER BY 3', (p_key,))
         return cur.fetchall()
 
     @staticmethod

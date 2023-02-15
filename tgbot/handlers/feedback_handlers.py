@@ -81,4 +81,4 @@ async def fsm_send_feedback(message: Message, state: FSMContext) -> None:  # TOD
 
 async def cb_feedback(call: CallbackQuery) -> None:
     await call.answer(cache_time=5)
-    await fsm_feedback(call.message)
+    await choose_feedback_type(call.message)
