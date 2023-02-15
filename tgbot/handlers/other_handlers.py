@@ -13,6 +13,7 @@ def register_other_handlers(dp: Dispatcher) -> None:
     dp.register_message_handler(search, state=None)
     dp.register_message_handler(other_content_types, content_types=
     ['photo', 'document', 'sticker', 'audio', 'animation'], state="*")
+    dp.register_message_handler(pin_msg, content_types=['pinned_message'], state="*")
     dp.register_callback_query_handler(cb_home, text='main_menu', state=None)
 
 
@@ -26,6 +27,11 @@ async def cb_home(call: CallbackQuery, state: FSMContext) -> None:
 
 async def other_content_types(message: Message):
     await message.answer('Я могу обрабатывать только текстовые сообщения 🤖')
+
+
+async def pin_msg(message: Message) -> None:
+    await message.answer('Поздравляю, вы нашли пасхалку!')
+    await message.answer_sticker("CAACAgIAAxkBAAEdOixj7Jkm30HTb-k50ar1MaBF4stUBgACgAcAAlwCZQMeSdnp7X1nxy4E")
 
 
 async def search(message: Message) -> None:

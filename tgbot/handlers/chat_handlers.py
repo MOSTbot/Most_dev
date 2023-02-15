@@ -75,7 +75,8 @@ async def cb_more_args(call: CallbackQuery, state: FSMContext) -> None:
 
     except IndexError:
         if data['message_text'] in SQLRequests.select_by_table_and_column('assertions', 'assertion_name'):
-            await  call.message.answer('Хотите посмотреть дополнительные вопросы по теме?',
+            await  call.message.answer('Аргументы на этот тезис закончились. '
+                                       'Хотите посмотреть дополнительные вопросы по теме?',
                                        reply_markup=InlineMarkups.
                                        create_im(2, ['Еще вопросы по теме', 'Главное меню'],
                                                  ['thematic_questions', 'main_menu']))
