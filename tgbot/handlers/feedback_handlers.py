@@ -25,7 +25,7 @@ async def choose_feedback_type(message: Message) -> None:
     SectionName.s_name = 'Оставить отзыв'  # for logging purposes
     await  message.answer(
         'Вы можете отправить нам анонимное сообщение или оставить свои контакты (telegram ID). '
-        'Выберите комфортный для вас способ ниже.', reply_markup=ReplyMarkups.create_rm(2, True, 'Анонимно',
+        'Выберите комфортный для вас способ ниже.', reply_markup=ReplyMarkups.create_rm(2, False, 'Анонимно',
                                                                                         'Оставить контакт'))
 
 
@@ -33,7 +33,7 @@ async def fsm_feedback(message: Message, state: FSMContext) -> None:
     async with state.proxy() as data: data['user_choice'] = message.text
     await  message.answer(
         'Напишите отзыв о нашем проекте или поделитесь своей историей разговора с близкими ⬇',
-        reply_markup=ReplyMarkups.create_rm(1, True, 'Отмена'))
+        reply_markup=ReplyMarkups.create_rm(1, False, 'Отмена'))
     await FSMFeedback.feedback.set()  # state: feedback
 
 

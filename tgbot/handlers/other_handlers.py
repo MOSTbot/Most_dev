@@ -11,6 +11,8 @@ from tgbot.utils import SQLRequests, SearchIndex
 
 def register_other_handlers(dp: Dispatcher) -> None:
     dp.register_message_handler(search, state=None)
+    dp.register_message_handler(other_content_types, content_types=
+    ['photo', 'document', 'sticker', 'audio', 'animation'], state="*")
     dp.register_callback_query_handler(cb_home, text='main_menu', state=None)
 
 
@@ -20,6 +22,10 @@ async def cb_home(call: CallbackQuery, state: FSMContext) -> None:
     if current_state is not None:
         await state.finish()
     await main_menu(call.message, state)
+
+
+async def other_content_types(message: Message):
+    await message.answer('Я могу обрабатывать только текстовые сообщения 🤖')
 
 
 async def search(message: Message) -> None:
