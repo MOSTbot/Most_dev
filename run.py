@@ -8,7 +8,7 @@ from tgbot import load_config
 from tgbot.handlers.registration import register_all_middlewares, register_all_filters, register_all_handlers, \
     register_all_bot_commands
 
-from tgbot.utils import db, Disp, SearchIndex, SQLRequests
+from tgbot.misc import db, Disp, SearchIndex, SQLRequests
 
 config = load_config(".env")
 storage = RedisStorage2()

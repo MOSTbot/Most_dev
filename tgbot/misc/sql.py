@@ -5,7 +5,7 @@ from functools import lru_cache
 import psycopg
 
 from tgbot import load_config
-from tgbot.utils import HashData
+from tgbot.misc import HashData
 
 config = load_config(".env")
 

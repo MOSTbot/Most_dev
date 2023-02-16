@@ -6,7 +6,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery
 
 from tgbot.kb import ReplyMarkups
-from tgbot.utils import FSMFeedback, SQLRequests, SQLInserts, SectionName, HashData
+from tgbot.misc import FSMFeedback, SQLRequests, SQLInserts, SectionName, HashData
 
 commands_list = ['/start', '/menu', '/chat', '/practice', '/advice', '/theory', '/feedback', '/privacy',
                  '🤓 Оставить отзыв', 'Отмена']

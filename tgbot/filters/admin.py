@@ -5,7 +5,7 @@ from typing import Any
 from aiogram.dispatcher.filters import BoundFilter
 from aiogram.types import Message
 
-from tgbot.utils import cur, HashData
+from tgbot.misc import cur, HashData
 
 from tgbot.config import Config
 

@@ -3,7 +3,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove
 
 from tgbot.kb import InlineMarkups
-from tgbot.utils import SectionName
+from tgbot.misc import SectionName
 
 
 def register_theory_handlers(dp: Dispatcher) -> None:

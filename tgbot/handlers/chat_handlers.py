@@ -5,8 +5,8 @@ from aiogram.types import Message, CallbackQuery
 
 from tgbot.handlers import main_menu
 from tgbot.kb import ReplyMarkups, InlineMarkups
-from tgbot.utils import SQLRequests
-from tgbot.utils.util_classes import SectionName
+from tgbot.misc import SQLRequests
+from tgbot.misc.utils import SectionName
 
 
 def register_chat_handlers(dp: Dispatcher) -> None:

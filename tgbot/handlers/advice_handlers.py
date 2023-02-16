@@ -5,7 +5,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 from tgbot.kb import ReplyMarkups, InlineMarkups
-from tgbot.utils import SQLRequests, SectionName
+from tgbot.misc import SQLRequests, SectionName
 
 
 def register_advice_handlers(dp: Dispatcher) -> None:

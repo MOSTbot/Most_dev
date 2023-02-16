@@ -8,7 +8,7 @@ from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from tgbot.api import GoogleSheetsAPI
 
 from tgbot.kb import ReplyMarkups, InlineMarkups
-from tgbot.utils import FSMAddAdmin, FSMDeleteAdmin, SQLInserts, SQLRequests, SQLDeletions, clear_cache_globally
+from tgbot.misc import FSMAddAdmin, FSMDeleteAdmin, SQLInserts, SQLRequests, SQLDeletions, clear_cache_globally
 
 
 def register_admin_handlers(dp: Dispatcher) -> None:

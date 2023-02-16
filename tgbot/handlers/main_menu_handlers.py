@@ -6,8 +6,8 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery
 
 from tgbot.kb import InlineMarkups, ReplyMarkups
-from tgbot.utils import SQLRequests
-from tgbot.utils.util_classes import SectionName
+from tgbot.misc import SQLRequests
+from tgbot.misc.utils import SectionName
 
 
 def register_main_menu_handlers(dp: Dispatcher) -> None:

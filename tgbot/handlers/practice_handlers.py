@@ -7,8 +7,8 @@ from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 from tgbot.handlers import main_menu
 from tgbot.kb import InlineMarkups, ReplyMarkups
-from tgbot.utils import SQLRequests
-from tgbot.utils.util_classes import SectionName
+from tgbot.misc import SQLRequests
+from tgbot.misc.utils import SectionName
 
 
 def register_practice_handlers(dp: Dispatcher) -> None:

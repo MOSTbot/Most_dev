@@ -6,7 +6,8 @@ import logging.handlers
 from aiogram.dispatcher.middlewares import BaseMiddleware
 from aiogram.types import CallbackQuery, Message
 
-from tgbot.utils import SectionName, HashData
+from tgbot.misc import SectionName, HashData, rotator, namer
+
 
 # noinspection PyUnusedLocal
 class LoggingMiddleware(BaseMiddleware):
@@ -22,6 +23,8 @@ class LoggingMiddleware(BaseMiddleware):
             fh.setFormatter(formatter)
             logger.addHandler(sh)
             logger.addHandler(fh)
+            fh.rotator = rotator
+            fh.namer = namer
 
         self.logger = logger
 

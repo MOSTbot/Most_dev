@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import gc
+import gzip
 import hashlib
+import os
+import shutil
 from dataclasses import dataclass
 from functools import _lru_cache_wrapper
 
@@ -36,5 +39,16 @@ async def clear_cache_globally() -> None:
                if isinstance(i, _lru_cache_wrapper)]
     for obj in objects:
         obj.cache_clear()
-    from tgbot.utils import SQLRequests
+    from tgbot.misc import SQLRequests
     SearchIndex.search_index = SQLRequests.get_search_index()
+
+
+def namer(name):
+    return f"{name}.gz"
+
+
+def rotator(source, dest):
+    with open(source, 'rb') as f_in:
+        with gzip.open(dest, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    os.remove(source)

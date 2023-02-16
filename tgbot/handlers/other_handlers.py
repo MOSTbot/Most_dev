@@ -6,7 +6,7 @@ from aiogram.types import Message, CallbackQuery
 
 from tgbot.handlers import main_menu
 from tgbot.kb import ReplyMarkups
-from tgbot.utils import SQLRequests, SearchIndex
+from tgbot.misc import SQLRequests, SearchIndex
 
 
 def register_other_handlers(dp: Dispatcher) -> None:

@@ -12,7 +12,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient import discovery
 
 from tgbot import load_config
-from tgbot.utils import clear_cache_globally, cur, db
+from tgbot.misc import clear_cache_globally, cur, db
 
 config = load_config(".env")
 
