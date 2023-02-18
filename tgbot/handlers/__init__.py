@@ -8,3 +8,4 @@ from .theory_handlers import *
 from .other_handlers import *
 from .echo_handlers import *
 from .registration import *
+from .section_descriptions import *

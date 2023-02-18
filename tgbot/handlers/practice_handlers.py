@@ -5,6 +5,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
+from tgbot.handlers.section_descriptions import practice_handlers
 from tgbot.handlers import main_menu
 from tgbot.kb import InlineMarkups, ReplyMarkups
 from tgbot.misc import SQLRequests
@@ -28,10 +29,8 @@ async def practice_mode(message: Message, state: FSMContext) -> None:
         data['p_flag'], data['score'], data['p_query'], data['question'], data['p_counter'] = False, 0, None, None, 0
     await  message.answer_photo(
         photo=open('tgbot/assets/practice.jpg', 'rb'),
-        caption='🟢 МОСТ работает в режиме тренажера.', reply_markup=ReplyKeyboardRemove())
-    await  message.answer('Проверьте, насколько хорошо вы умеете бороться с пропагандой.'
-                          ' Мы собрали для вас 10 мифов о войне и для каждого подобрали 3 варианта ответа —'
-                          ' выберите верные, а бот МОСТ даст подробные комментарии.',
+        caption=practice_handlers['practice_mode']['caption'], reply_markup=ReplyKeyboardRemove())
+    await  message.answer(practice_handlers['practice_mode']['answer'],
                           reply_markup=InlineMarkups.create_im(2, ['Поехали! 🚀', 'Главное меню'],
                                                                ['lets_go', 'main_menu']))
 
@@ -44,7 +43,8 @@ async def practice_start(call: CallbackQuery, state: FSMContext) -> None:
                 await call.answer(cache_time=5)
                 cases = InlineMarkups.create_im(3, ['1', '2', '3'], ['1', '2', '3'])
                 data['p_query'] = SQLRequests.get_practice_questions()
-                data['question'] = data['p_query'][data['p_counter']] #WARNING! If the table is empty IndexError is raised!
+                # WARNING! If the table is empty IndexError is raised!
+                data['question'] = data['p_query'][data['p_counter']]
                 data['p_answers'] = SQLRequests.get_practice_answers(data['question'][1])  # type: ignore
                 await  call.message.answer(data['question'][0], reply_markup=cases)  # type: ignore
             else:
@@ -61,7 +61,7 @@ async def practice_reaction(call: CallbackQuery, state: FSMContext) -> None:
         try:
             if data['p_flag'] is False:
                 data['p_flag'] = True
-                con = InlineMarkups.create_im(2, ['Продолжить', 'Отмена'], ['practice_continue', 'main_menu'])
+                con = InlineMarkups.create_im(2, ['Продолжить', 'Главное меню'], ['practice_continue', 'main_menu'])
                 with contextlib.suppress(TypeError):
                     if call.data == '1':
                         data['score'] = data['score'] + int(data['p_answers'][0][1])
@@ -83,20 +83,13 @@ async def practice_continue(call: CallbackQuery, state: FSMContext) -> None:
                 menu = ReplyMarkups.create_rm(3, True, 'Сыграть еще раз!', '🧠 Психология разговора',
                                               '📚 База аргументов', 'Главное меню')
                 if data['score'] < 8:
-                    await call.message.answer('<b>Убедить не получилось</b> 🙁\n'
-                                              'Почитайте нашу базу аргументов и рекомендации психологов по ведению диалогов,'
-                                              ' чтобы в следующий раз использовать бережную и проверенную аргументацию.',
+                    await call.message.answer(practice_handlers['practice_continue']['answer1'],
                                               reply_markup=menu)
                 elif 7 < data['score'] < 15:
-                    await call.message.answer('<b>На верном пути!</b> ❗\n'
-                                              'Вы смогли ответить почти на все тезисы. '
-                                              'Почитайте нашу базу аргументов и рекомендации психологов по ведению диалогов,'
-                                              ' чтобы в следующий раз иметь ответ на любой вопрос.',
+                    await call.message.answer(practice_handlers['practice_continue']['answer2'],
                                               reply_markup=menu)
                 else:
-                    await call.message.answer('<b>Оппонент убежден!</b> ✅\n'
-                                              'Бережность, открытость и проверенная информация '
-                                              '– то, что вам помогло это сделать. Браво.',
+                    await call.message.answer(practice_handlers['practice_continue']['answer3'],
                                               reply_markup=InlineMarkups.create_im(1, ['Главное меню'], ['main_menu']))
                 data['p_flag'], data['score'], data['p_counter'] = False, 0, 0
                 return

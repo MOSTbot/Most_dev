@@ -4,9 +4,16 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery
 
 from tgbot.handlers import main_menu
+from tgbot.handlers.section_descriptions import chat_handlers
 from tgbot.kb import ReplyMarkups, InlineMarkups
 from tgbot.misc import SQLRequests
 from tgbot.misc.utils import SectionName
+
+CB_MENU_ITEMS: tuple[list[str], list[str]] = ['Еще аргумент', 'Еще вопросы', 'Оставить отзыв', 'Главное меню'], \
+                                             ['more_arguments', 'thematic_questions', 'feedback', 'main_menu']
+
+OTHER_QUESTIONS: tuple[list[str], list[str]] = ['Еще вопросы по теме', 'Главное меню'], \
+                                               ['thematic_questions', 'main_menu']
 
 
 def register_chat_handlers(dp: Dispatcher) -> None:
@@ -25,24 +32,10 @@ async def chat_mode(message: Message) -> None:
     SectionName.s_name = 'Режим диалога'  # for logging purposes
     await  message.answer_photo(
         photo=open('tgbot/assets/chat.jpg', 'rb'),
-        caption='🟢 МОСТ работает в режиме диалога. Отправляйте фразу или вопрос в чат и получайте аргументы,'
-                ' которые помогают отделить ложь от правды. Оценивайте их силу, чтобы сделать МОСТ еще крепче.',
+        caption=chat_handlers['chat_mode']['caption'],
         reply_markup=ReplyMarkups.create_rm(2, True,
                                             *SQLRequests.select_by_table_and_column('assertions', 'assertion_name')))
-    await  message.answer('<i>Рассмотрим пример аргумента</i>\n\n'
-                          'Собеседни_ца говорит вам: <b>«Мы многого не знаем, всё не так однозначно».</b>\n\n'
-                          '<b>Фраза-мост — позволяет построить контакт с собеседником</b> ⬇\n'
-                          'Соглашусь, что мы многого не знаем. Но мы точно знаем, что жизнь человека –'
-                          ' высшая ценность общества, верно?\n\n'
-                          '<b>Аргумент — конкретные примеры</b> ⬇\n'
-                          'Я знаю одно: война несет смерть. Из-за войн страдают обычные люди.'
-                          ' История научила нас этому, но почему-то мы думаем, что сможем провести войну без жертв.'
-                          ' Так не бывает, к сожалению.\n\n'
-                          '<b>Наводящий вопрос — продолжит диалог и запустит критическое мышление</b> ⬇\n'
-                          'Что думаешь об этом?\n\n'
-                          'Мы рекомендуем использовать три части ответа вместе, но по отдельности они тоже работают.\n\n'
-                          'Выберите одну из предложенных тем ниже или введите свою в поле для ввода,'
-                          ' чтобы получить аргумент. Например, «Путин знает, что делает» или «Это война с НАТО» ⬇')
+    await  message.answer(chat_handlers['chat_mode']['answer'])
 
 
 # WARNING: Catch exception 'Message text is empty' (Admin has not added any facts yet)
@@ -50,23 +43,22 @@ async def assertions(message: Message, state: FSMContext) -> None:  # These are 
     async with state.proxy() as data:
         data['message_text'], data['query'], data['counter'] = message.text, SQLRequests.get_facts(message.text), 0
         await  message.answer((data['query'][data['counter']][0]),
-                              reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы',
-                                                                       'Оставить отзыв', 'Главное меню'],
-                                                                   ['more_arguments', 'thematic_questions',
-                                                                    'feedback', 'main_menu']))
+                              reply_markup=InlineMarkups.create_im(2, *CB_MENU_ITEMS))
 
 
-async def cb_more_args(call: CallbackQuery, state: FSMContext) -> None:
+async def cb_more_args(call: CallbackQuery, state: FSMContext) -> None | Message:  # FIXME: Needs refactoring
     try:
         await call.answer(cache_time=5)
         try:
             async with state.proxy() as data:
+                if data['counter'] is None:
+                    return await  call.message.answer('Аргументы на этот тезис закончились. '
+                                                      'Хотите посмотреть дополнительные вопросы по теме?',
+                                                      reply_markup=InlineMarkups.
+                                                      create_im(2, *OTHER_QUESTIONS))
                 data['counter'] += 1
                 await call.message.answer((data['query'][data['counter']][0]),
-                                          reply_markup=InlineMarkups.create_im(2, ['Еще аргумент', 'Еще вопросы',
-                                                                                   'Оставить отзыв', 'Главное меню'],
-                                                                               ['more_arguments', 'thematic_questions',
-                                                                                'feedback', 'main_menu']))
+                                          reply_markup=InlineMarkups.create_im(2, *CB_MENU_ITEMS))
         except (TypeError, KeyError):
             current_state = await state.get_state()
             if current_state is not None:
@@ -78,13 +70,13 @@ async def cb_more_args(call: CallbackQuery, state: FSMContext) -> None:
             await  call.message.answer('Аргументы на этот тезис закончились. '
                                        'Хотите посмотреть дополнительные вопросы по теме?',
                                        reply_markup=InlineMarkups.
-                                       create_im(2, ['Еще вопросы по теме', 'Главное меню'],
-                                                 ['thematic_questions', 'main_menu']))
+                                       create_im(2, *OTHER_QUESTIONS))
+            async with state.proxy() as data:
+                data['counter'] = None
         elif data['message_text'] in SQLRequests.select_by_table_and_column('a_assertions', 'a_assertion_name'):
             other_questions = ReplyMarkups.create_rm(2, True, *SQLRequests.rnd_questions())
             await call.message.answer('Вы можете выбрать другие вопросы из меню ниже:', reply_markup=other_questions)
-        async with state.proxy() as data:
-            data['counter'] = 0
+    return None
 
 
 async def thematic_questions(call: CallbackQuery, state: FSMContext) -> None:

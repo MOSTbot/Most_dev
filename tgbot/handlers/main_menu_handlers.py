@@ -5,6 +5,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery
 
+from tgbot.handlers.section_descriptions import main_menu_handlers
 from tgbot.kb import InlineMarkups, ReplyMarkups
 from tgbot.misc import SQLRequests
 from tgbot.misc.utils import SectionName
@@ -24,19 +25,7 @@ def register_main_menu_handlers(dp: Dispatcher) -> None:
 async def start(message: Message) -> None:
     SectionName.s_name = 'Стартовое меню'  # for logging purposes
     await message.answer_photo(photo=open('tgbot/assets/start.jpg', 'rb'),
-                               caption='<b>Мы ответственны за тех, кого приручила пропаганда</b>.\n'
-                                       'Особенно за родных, любимых и друзей.\n\n'
-                                       'Разве не достаточно просто сказать правду?\n'
-                                       'Увы, многие сталкивались с тем, что '
-                                       '<b>правду не слышат или не хотят слышать</b>. Но это не повод сдаваться.\n\n'
-                                       'МОСТ — cовместный проект <a href="https://relocation.guide/">гайда в свободный мир</a> и XZ foundation. '
-                                       'Это сценарии разговоров с близкими о войне.\n\n'
-                                       'Их разработали волонтеры гайда <b>с опытом переубеждения</b> близких, а '
-                                       '<b>психологи, социологи и журналисты</b> добавили научную базу.\n\n'
-                                       'Разговор о войне не будет простым и быстрым.\n\n'
-                                       'Мы верим, что <b>экспертный подход, общественный вклад и эмпатия</b> помогут «вернуть связь» '
-                                       'с близкими и создать продукт, который основан на способности слышать, '
-                                       'мыслить и противостоять ложным мнениям.',
+                               caption=main_menu_handlers['start']['caption'],
                                reply_markup=InlineMarkups.create_im(1, ['Перейти в главное меню'],
                                                                     ['main_menu']))
 
