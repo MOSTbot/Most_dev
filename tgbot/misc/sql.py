@@ -166,7 +166,7 @@ class SQLRequests:
                     "SELECT a_assertion_name "
                     "FROM a_assertions) AS dt "
                     "ORDER BY RANDOM() "
-                    "LIMIT 6;")
+                    "LIMIT 10;")
         random_questions = cur.fetchall()
         return [random_questions[i][0] for i in range(len(random_questions))]
 
