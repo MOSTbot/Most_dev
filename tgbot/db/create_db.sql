@@ -104,3 +104,14 @@ CREATE TABLE IF NOT EXISTS notifications
     n_id            SERIAL PRIMARY KEY,
     notification    TEXT
 );
+
+CREATE TABLE IF NOT EXISTS users
+(
+    tid           BIGINT PRIMARY KEY,
+    username      TEXT,
+    full_name     TEXT,
+    status        TEXT,
+    last_activity TEXT,
+    subscribed    TEXT
+
+);

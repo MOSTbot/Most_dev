@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from functools import lru_cache
 
 import psycopg
@@ -199,4 +200,14 @@ class SQLInserts:
     def send_feedback(table: str, user_id: str = '', datetime: str = '', feedback: str = '') -> None:
         cur.execute(f'INSERT INTO {table} (user_id, feedback_datetime, user_feedback) '
                     f'VALUES(%s, %s, %s)', (user_id, datetime, feedback))
+        db.commit()
+
+    @staticmethod
+    async def newcomers(tid, username, full_name, status='active'):
+        subscribed = last_activity = datetime.now().strftime("%d-%m-%y %H:%M")
+        cur.execute(f"INSERT INTO users (tid, username, full_name, subscribed, status, last_activity)"
+                    f"VALUES ({tid}, '{username}', '{full_name}', '{subscribed}', '{status}', '{last_activity}') "
+                    f"ON CONFLICT (tid) DO UPDATE SET username = EXCLUDED.username, "
+                    f"full_name = EXCLUDED.full_name, last_activity = EXCLUDED.last_activity, "
+                    f"status = EXCLUDED.status;")
         db.commit()

@@ -7,7 +7,7 @@ from aiogram.types import Message, CallbackQuery
 
 from tgbot.handlers.section_descriptions import main_menu_handlers
 from tgbot.kb import InlineMarkups, ReplyMarkups
-from tgbot.misc import SQLRequests
+from tgbot.misc import SQLRequests, SQLInserts
 from tgbot.misc.utils import SectionName
 
 
@@ -24,6 +24,9 @@ def register_main_menu_handlers(dp: Dispatcher) -> None:
 
 async def start(message: Message) -> None:
     SectionName.s_name = 'Стартовое меню'  # for logging purposes
+    tid, username = int(message.from_user.id), message.from_user.username
+    full_name = message.from_user.full_name
+    await SQLInserts.newcomers(tid=tid, username=username, full_name=full_name)
     await message.answer_photo(photo=open('tgbot/assets/start.jpg', 'rb'),
                                caption=main_menu_handlers['start']['caption'],
                                reply_markup=InlineMarkups.create_im(1, ['Перейти в главное меню'],
