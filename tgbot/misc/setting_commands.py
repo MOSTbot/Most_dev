@@ -9,6 +9,5 @@ async def set_default_commands(bot: Bot) -> None:
         BotCommand('practice', '🏋️‍ Режим тренажера'),
         BotCommand('advice', '🧠 Психология разговора'),
         BotCommand('theory', '📚 База аргументов'),
-        BotCommand('feedback', '🤓 Поделиться мнением или историей'),
-        BotCommand('privacy', '🤫 Политика конфиденциальности')],
+        BotCommand('feedback', '🤓 Поделиться мнением или историей')],
         scope=BotCommandScopeDefault())

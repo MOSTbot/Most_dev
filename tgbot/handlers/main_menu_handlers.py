@@ -15,11 +15,6 @@ def register_main_menu_handlers(dp: Dispatcher) -> None:
     dp.register_message_handler(start, commands=["start"], state="*")
     dp.register_message_handler(main_menu, commands=["menu"], state="*")
     dp.register_message_handler(main_menu, Text(contains='Главное меню', ignore_case=True), state="*")
-    dp.register_message_handler(data_privacy, commands=["privacy"], state="*")
-    dp.register_callback_query_handler(data_privacy, text='data_privacy', state="*")
-    dp.register_message_handler(data_privacy_answers, lambda message: message.text in SQLRequests
-                                .select_by_table_and_column('data_privacy', 'dp_question'),
-                                state="*")
 
 
 async def start(message: Message) -> None:
@@ -43,8 +38,7 @@ async def main_menu(message: Message, state: FSMContext) -> None:
                                             .select_by_table_and_column('main_menu', 'main_menu_name')))
     await message.answer(SQLRequests
                          .select_main_menu_description(), reply_markup=InlineMarkups
-                         .create_im(1, ['Узнать больше о проекте', 'Политика конфиденциальности'],
-                                    ['sc', 'data_privacy'],
+                         .create_im(1, ['Узнать больше о проекте'], ['sc'],
                                     ['https://relocation.guide/most', '']))  # FIXME: The link needs to be replaced
     if res := SQLRequests.select_by_table_and_column('notifications', 'notification'):
         await message.answer(res[0])
